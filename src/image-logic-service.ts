@@ -15,7 +15,6 @@ export interface ImageStyle {
 export class ImageLogicService {
     private static instance: ImageLogicService;
     private currentValue: number = 0;
-    private index: number = 0
     private neighbors: {
         t?: number;  // top
         b?: number;  // bottom
@@ -47,7 +46,7 @@ export class ImageLogicService {
     public evaluateCondition(condition?: string): boolean {
         if (!condition) return true;
 
-        // Ignore linting error cause they are being used in the eval method.
+        // @ts-ignore - Variables are used in eval
         const { c, t, b, l, r, tl, tr, bl, br } = {
             c: this.currentValue,
             t: this.neighbors.t,

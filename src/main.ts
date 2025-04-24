@@ -373,10 +373,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                             motion = Math.round(motion / step) * step;
                         }
 
-                        let value = currentStyle.values.find(s => (motion >= s.min && motion < s.max) || motion == s.min && motion == s.max)?.val || currentStyle.values[0].val;
-                        // if (currentStyle.type == "image") {
-                        //     value = imageGrid[y][x].toString()
-                        // }
+                        let value = currentStyle.values.find(s => 
+                            (motion >= s.min! && motion < s.max!) || 
+                            (motion === s.min! && motion === s.max!)
+                        )?.val || currentStyle.values[0].val;
 
 
                         if (typeof value == "string") {
