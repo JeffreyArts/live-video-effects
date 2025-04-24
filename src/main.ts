@@ -1,18 +1,18 @@
 import './vite-env.d.ts';
 import { WebcamModel } from './webcam';
 import { MotionDetectionService } from './motion-detection';
-import { OptionsService } from './options-service';
+import { optionsService, Style, StyleType } from './options-service';
+import { ImageLogicService } from './image-logic-service';
+
 
 // Basis setup voor de applicatie
+const webcam = new WebcamModel();
+const motionDetection = new MotionDetectionService();
+const imageLogicService = ImageLogicService.getInstance();
+
 document.addEventListener('DOMContentLoaded', async () => {
-    const webcam = new WebcamModel();
-    const optionsService = new OptionsService();
-    const options = optionsService.getOptions();
-    
-    const motionDetection = new MotionDetectionService(
-        options.gridSize,
-        options.bufferSize
-    );
+    const options = optionsService.options;
+    const styles = optionsService.styles;
     
     try {
         await webcam.start();
@@ -131,6 +131,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.body.appendChild(canvas);
         const ctx = canvas.getContext('2d')!;
 
+        // Bereken eerst alle afbeeldingen
+        const imageGrid: (number)[][] = [];
+        const cachedImages: { [key: string]: HTMLImageElement } = {};
+        let currentStyle = styles.find(s => s.name.includes(optionsService.options.selectedStyle)) || styles[0];
+        loadImages()
+
         function updateCanvasSize() {
             const videoElement = webcam['videoElement'];
             if (!videoElement || !ctx) return;
@@ -184,7 +190,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="value-display">
                     <label for="style">Visualisatiestijl</label>
                     <select id="style">
-                         ${optionsService.getStyles().map(style => `
+                         ${styles.map(style => `
                             <option value="${style.name}">
                                 ${style.name}
                             </option>
@@ -243,11 +249,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         const thresholdInput = sidebar.querySelector('#threshold') as HTMLInputElement;
         const styleSelect = sidebar.querySelector('#style') as HTMLSelectElement;
 
+        // Pas de opties toe na het laden
+        if (videoElement) {
+            optionsService.applyOptions(motionDetection, videoElement);
+        } else {
+            optionsService.applyOptions(motionDetection);
+        }
+
         gridXInput.addEventListener('input', () => {
             const value = parseInt(gridXInput.value);
             sidebar.querySelector('#gridXValue')!.textContent = value.toString();
             optionsService.setGridSize(value, options.gridSize.y);
             motionDetection['gridSize'].x = value;
+            console.log(options)
         });
 
         gridYInput.addEventListener('input', () => {
@@ -285,10 +299,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         styleSelect.addEventListener('change', () => {
             const newStyle = styleSelect.value as StyleType;
             optionsService.setSelectedStyle(newStyle);
+            currentStyle = styles.find(s => s.name.includes(optionsService.options.selectedStyle)) || styles[0];
+            loadImages()
         });
 
+        function loadImages() {
+            if (currentStyle?.type === 'image') {
+                currentStyle.values.forEach(v => {
+                    return new Promise<void>((resolve, reject) => {
+                        const imagePath = v.val.toString()
+                        const img = new Image();
+                            img.onload = () => {
+                                console.log(`Afbeelding geladen: ${imagePath}`);
+                                cachedImages[imagePath] = img
+                                resolve();
+                            };
+                            img.onerror = (e) => {
+                                console.error(`Fout bij laden afbeelding ${imagePath}:`, e);
+                                reject(e);
+                            };
+                            img.src = imagePath;
+                    })
+                })
+            }
+        }
+
+        let i = 0
         // Animation loop
-        function update() {
+        async function update() {
+            i++
             const webcamCanvas = webcam.currentImage;
             if (webcamCanvas && ctx) {
                 // Update canvas grootte om overeen te komen met video
@@ -302,25 +341,43 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // Bereken beweging
                 const motionGrid = motionDetection.analyzeFrame(webcamCanvas);
-
+                
                 // Teken bewegingsdetectie
                 const cellWidth = canvas.width / motionGrid[0].length;
                 const cellHeight = canvas.height / motionGrid.length;
-                const styles = optionsService.getStyles();
-                const currentStyle = styles.find(s => s.name.includes(optionsService.getOptions().selectedStyle)) || styles[0];
 
-                // console.log(styles, optionsService.getOptions().selectedStyle)
+
+                if (currentStyle.type == "image") {
+                    for (let y = 0; y < motionGrid.length; y++) {
+                        imageGrid[y] = [];
+                        
+                        for (let x = 0; x < motionGrid[y].length; x++) {
+                            let motion = motionGrid[y][x];
+
+                            if (currentStyle.valueRange) {
+                                const step = 1 / (currentStyle.valueRange - 1);
+                                motion = Math.round(motion / step) * step;
+                            }
+                            imageGrid[y][x] = motion;
+                        }
+                    }
+                }
+
 
                 for (let y = 0; y < motionGrid.length; y++) {
                     for (let x = 0; x < motionGrid[y].length; x++) {
                         let motion = motionGrid[y][x];
 
                         if (currentStyle.valueRange) {
-                            const step = 1 / (currentStyle.valueRange -1);
+                            const step = 1 / (currentStyle.valueRange - 1);
                             motion = Math.round(motion / step) * step;
                         }
 
-                        const value = currentStyle.values.find(s => (motion >= s.min && motion < s.max) || motion == s.min && motion == s.max)?.val || currentStyle.values[0].val;
+                        let value = currentStyle.values.find(s => (motion >= s.min && motion < s.max) || motion == s.min && motion == s.max)?.val || currentStyle.values[0].val;
+                        // if (currentStyle.type == "image") {
+                        //     value = imageGrid[y][x].toString()
+                        // }
+
 
                         if (typeof value == "string") {
                             ctx.fillStyle = value;
@@ -360,6 +417,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 x * cellWidth + cellWidth / 2,
                                 y * cellHeight + cellHeight / 2
                             );
+                        } else if (currentStyle.type == "image") {
+                            const imagePath = processImageCell(motion, x, y, imageGrid);
+                            // console.log(`IMAGEGRID2, ${imageGrid[y][x]}`, imagePath)
+
+                            if (cachedImages[imagePath]) {
+                                ctx.drawImage(
+                                    cachedImages[imagePath],
+                                    x * cellWidth - 0.5,
+                                    y * cellHeight - 0.5,
+                                    cellWidth + 0.5, 
+                                    cellHeight + 0.5
+                                );
+                            }
                         }
                     }
                 }
@@ -371,4 +441,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         console.error('Kon de webcam niet starten:', error);
     }
+    function processImageCell(value: number, x: number, y: number, grid: number[][]): string | number {
+        const style = styles.find((s: Style) => s.name === optionsService.options.selectedStyle);
+        if (style?.type === 'image') {
+            const neighbors = {
+                t: y > 0 ? grid[y-1][x] : undefined,
+                b: y < grid.length-1 ? grid[y+1][x] : undefined,
+                l: x > 0 ? grid[y][x-1] : undefined,
+                r: x < grid[0].length-1 ? grid[y][x+1] : undefined,
+                tl: y > 0 && x > 0 ? grid[y-1][x-1] : undefined,
+                tr: y > 0 && x < grid[0].length-1 ? grid[y-1][x+1] : undefined,
+                bl: y < grid.length-1 && x > 0 ? grid[y+1][x-1] : undefined,
+                br: y < grid.length-1 && x < grid[0].length-1 ? grid[y+1][x+1] : undefined
+            };
+    
+            // console.log(`c: ${value} l: ${neighbors.l} r: ${neighbors.r} | `, style.values[3].if,  JSON.stringify(grid))
+            imageLogicService.setCurrentValue(value);
+            imageLogicService.setNeighbors(neighbors);
+            
+            const res = imageLogicService.getImageForValue(style as any);
+            return res
+        }
+        return value;
+    }
 });
+
