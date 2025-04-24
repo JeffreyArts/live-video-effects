@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "NODE_ENV=staging bash scripts/deploy.sh"
   },
   "devDependencies": {
     "typescript": "~5.7.2",
