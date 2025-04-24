@@ -12,7 +12,13 @@ export class WebcamModel {
 
     async start(): Promise<void> {
         try {
-            this.stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            this.stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 },
+                    facingMode: "user"
+                } 
+            });
             if (this.videoElement) {
                 this.videoElement.srcObject = this.stream;
                 await this.videoElement.play();

@@ -26,12 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                width: 100vw;
-                height: calc(100vw * 9/16);
-                max-height: 100vh;
-                max-width: calc(100vh * 16/9);
                 pointer-events: none;
-                object-fit: none;
             }
             .sidebar {
                 position: fixed;
@@ -135,6 +130,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         const canvas = document.createElement('canvas');
         document.body.appendChild(canvas);
         const ctx = canvas.getContext('2d')!;
+
+        function updateCanvasSize() {
+            const videoElement = webcam['videoElement'];
+            if (!videoElement || !ctx) return;
+
+            // Wacht tot de video dimensies beschikbaar zijn
+            if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) return;
+
+            const windowAspectRatio = window.innerWidth / window.innerHeight;
+            const videoAspectRatio = videoElement.videoWidth / videoElement.videoHeight;
+            
+            let canvasWidth, canvasHeight;
+            
+            if (windowAspectRatio > videoAspectRatio) {
+                // Landscape: fit to height
+                canvasHeight = window.innerHeight;
+                canvasWidth = canvasHeight * videoAspectRatio;
+            } else {
+                // Portrait: fit to width
+                canvasWidth = window.innerWidth;
+                canvasHeight = canvasWidth / videoAspectRatio;
+            }
+
+            // Update zowel de canvas resolutie als de CSS dimensies
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            canvas.style.width = `${canvasWidth}px`;
+            canvas.style.height = `${canvasHeight}px`;
+        }
+
+        // Voeg resize event listener toe
+        window.addEventListener('resize', updateCanvasSize);
+
+        // Voeg ook een event listener toe voor wanneer de video dimensies beschikbaar komen
+        if (videoElement) {
+            videoElement.addEventListener('loadedmetadata', updateCanvasSize);
+        }
+
+        // Initiële canvas size update
+        updateCanvasSize();
 
         // Maak sidebar
         const sidebar = document.createElement('div');
@@ -278,8 +313,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 for (let y = 0; y < motionGrid.length; y++) {
                     for (let x = 0; x < motionGrid[y].length; x++) {
-                        const motion = motionGrid[y][x];
-                        const value = currentStyle.values.find(s => motion >= s.min && motion < s.max)?.val || currentStyle.values[0].val;
+                        let motion = motionGrid[y][x];
+
+                        if (currentStyle.valueRange) {
+                            const step = 1 / (currentStyle.valueRange -1);
+                            motion = Math.round(motion / step) * step;
+                        }
+
+                        const value = currentStyle.values.find(s => (motion >= s.min && motion < s.max) || motion == s.min && motion == s.max)?.val || currentStyle.values[0].val;
 
                         if (typeof value == "string") {
                             ctx.fillStyle = value;
@@ -310,6 +351,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 2 * Math.PI
                             );
                             ctx.fill();
+                        } else if (currentStyle.type == "text") {
+                            ctx.font = `${Math.min(cellWidth, cellHeight)}px Arial`;
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(
+                                value.toString(),
+                                x * cellWidth + cellWidth / 2,
+                                y * cellHeight + cellHeight / 2
+                            );
                         }
                     }
                 }

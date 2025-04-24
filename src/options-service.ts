@@ -7,7 +7,8 @@ export interface StyleValue {
 export interface Style {
     name: string;
     defaultValue?: string
-    type: 'rectangle' | 'dot' | 'image';
+    valueRange?: number
+    type: 'rectangle' | 'dot' | 'image' | 'text';
     values: StyleValue[];
 }
 
@@ -36,6 +37,19 @@ export class OptionsService {
                 {min: 0.25, max: 0.5, val: .33},
                 {min: 0.5, max: 0.75, val: .666},
                 {min: 0.75, max: 1, val: 1}
+            ]
+        },
+        {
+            name: 'Emoji',
+            type: 'text',
+            valueRange: 6,
+            values: [
+                {min: 0, max: 0, val: "😄"},
+                {min: 0.2, max: 0.2, val: "😌"},
+                {min: 0.4, max: 0.4, val: "🙂"},
+                {min: 0.6, max: 0.6, val: "😕"},
+                {min: 0.8, max: .8, val: "🙁"},
+                {min: 1, max: 1, val: "😫"},
             ]
         },
         {
