@@ -6,11 +6,20 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "lint": "eslint . --fix",
     "preview": "vite preview",
     "deploy": "NODE_ENV=staging bash scripts/deploy.sh"
   },
+  "dependencies": {
+    "normalize.css": "^8.0.1",
+    "typescript": "^5.2.2"
+  },
   "devDependencies": {
-    "typescript": "~5.7.2",
-    "vite": "^6.3.1"
+    "@stylistic/eslint-plugin-ts": "^4.2.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.1",
+    "@typescript-eslint/parser": "^7.0.1",
+    "eslint": "^8.56.0",
+    "sass": "^1.71.0",
+    "vite": "^5.1.0"
   }
 }

@@ -1,0 +1,28 @@
+@use "./variables.scss";
+
+body {
+    font-family: var(--default-font), sans-serif;
+    font-size: 16px;
+}
+
+@font-face {
+    font-family: 'Fixedsys';
+    font-weight: normal;
+    font-style: normal;
+    src: url("/fonts/fixed-sys.otf");
+}
+
+
+@font-face {
+    font-family: 'Open sans';
+    src: url('/fonts/OpenSans-VariableFont_wdth,wght.ttf') format('truetype');
+    font-weight: 100 800;
+    font-stretch: 55 100;
+}
+@font-face {
+    font-family: 'Open sans';
+    src: url('/fonts/OpenSans-Italic-VariableFont_wdth,wght.ttf') format('truetype');
+    font-style: italic;
+    font-weight: 100 800;
+    font-stretch: 55 100;
+}

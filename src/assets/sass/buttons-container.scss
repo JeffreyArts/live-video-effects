@@ -1,0 +1,54 @@
+.buttons-container {
+    width: 100%;
+    text-align: center;
+
+    .button {
+        background-color: #eee;
+        color: #666;
+        line-height: 1em;
+        transition: .32s all ease;
+
+        + .button {
+            margin-left: 16px;
+        }
+
+        &:hover {
+            background-color: var(--accent-color);
+            color: #fff;
+        }
+
+        &.__isRecording {
+            background-color: #fff;
+            color: #1a1b1c; // black
+            .recording-icon {
+                color: #ba0202;
+                animation: recordAnimation 0.8s infinite;
+            }
+        }
+
+        &.__isLoading {
+            background-color: var(--accent-color);
+            color: #fff;
+
+            .loading-icon {
+                animation: loadingAnimation 1s infinite linear;
+                display: inline-block;
+                transform-origin: center center;
+            }
+        }
+
+        .recording-icon {
+            margin-right: 8px;
+        }
+    }
+}
+
+@keyframes loadingAnimation {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+
+}
