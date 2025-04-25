@@ -11,6 +11,7 @@
     "deploy": "NODE_ENV=staging bash scripts/deploy.sh"
   },
   "dependencies": {
+    "jao-icons": "^1.2.16",
     "normalize.css": "^8.0.1",
     "typescript": "^5.2.2"
   },

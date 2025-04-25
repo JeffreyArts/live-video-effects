@@ -25,20 +25,6 @@ canvas {
 .sidebar.open {
     transform: translateX(0);
 }
-
-.toggle-button {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    border: none;
-    padding: 10px;
-    cursor: pointer;
-    z-index: 1001;
-    border-radius: 5px;
-}
-
 .settings-group {
     margin-bottom: 25px;
     background: rgba(255, 255, 255, 0.1);

@@ -3,6 +3,7 @@ import { WebcamModel } from "./webcam"
 import { MotionDetectionService } from "./motion-detection"
 import { OptionsService, Style, StyleValue } from "./options-service"
 import { ImageLogicService, ImageStyle } from "./image-logic-service"
+import { iconsMap } from "jao-icons"
 
 
 // Basis setup voor de applicatie
@@ -16,6 +17,63 @@ document.addEventListener("DOMContentLoaded", async () => {
     const styles = optionsService.styles
     
     try {
+        // Voeg het wrench icon toe aan de toggle button
+        const toggleButton = document.getElementById("toggleButton")
+        if (toggleButton) {
+            const wrenchData = iconsMap.large.wrench
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+            svg.setAttribute("width", "48")
+            svg.setAttribute("height", "48")
+            
+            // Bereken de totale grootte inclusief beide borders
+            const totalWidth = wrenchData[0].length + 2 // +2 voor beide borders
+            const totalHeight = wrenchData.length + 2 // +2 voor beide borders
+            
+            // Pas de viewBox aan voor de grotere rects en borders
+            svg.setAttribute("viewBox", `0 0 ${totalWidth * 5} ${totalHeight * 5}`)
+            
+            // Loop door het hele grid
+            for (let y = 0; y < totalHeight; y++) {
+                for (let x = 0; x < totalWidth; x++) {
+                    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
+                    rect.setAttribute("x", (x * 5).toString())
+                    rect.setAttribute("y", (y * 5).toString())
+                    rect.setAttribute("width", "4")
+                    rect.setAttribute("height", "4")
+                    rect.setAttribute("class", "jao-icon-cell")
+                    
+                    // Bepaal de v-waarde op basis van de positie
+                    if (x === 0 || x === totalWidth - 1 || y === 0 || y === totalHeight - 1) {
+                        // Buitenste border (zwart)
+                        rect.setAttribute("v", "1")
+                    } else if (x === 1 || x === totalWidth - 2 || y === 1 || y === totalHeight - 2) {
+                        // Binnenste border (wit)
+                        rect.setAttribute("v", "0")
+                    } else {
+                        // Originele wrench data
+                        const wrenchX = x - 1
+                        const wrenchY = y - 1
+                        rect.setAttribute("v", wrenchData[wrenchY][wrenchX].toString())
+                    }
+                    
+                    svg.appendChild(rect)
+                }
+            }
+            
+            toggleButton.appendChild(svg)
+        }
+
+        // Voeg click event listener toe voor het sluiten van de sidebar
+        document.addEventListener("click", (event) => {
+            const sidebar = document.querySelector(".sidebar") as HTMLDivElement
+            const toggleButton = document.querySelector(".toggle-button") as HTMLButtonElement
+            
+            // Controleer of de klik buiten de sidebar en toggle button was
+            if (!sidebar.contains(event.target as Node) && !toggleButton.contains(event.target as Node)) {
+                sidebar.classList.remove("open")
+            }
+        })
+
         await webcam.start()
         
         // Haal het video element uit de HTML

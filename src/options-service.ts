@@ -343,7 +343,10 @@ export class OptionsService {
         this._options.selectedStyle = value
         this._currentStyle = this.getStyleByName(value) || styles[0]
         this.saveOptions()
-        this.applyOptions(this._motionDetection, this._videoElement)
+        
+        if (this._motionDetection) {
+            this.applyOptions(this._motionDetection, this._videoElement)
+        }
     }
 
     setShowVideo(value: boolean): void {
@@ -491,7 +494,9 @@ export class OptionsService {
         styleSelect.addEventListener("change", () => {
             const newStyle = styleSelect.value
             this.setSelectedStyle(newStyle)
-            this.applyOptions(this._motionDetection, this._videoElement)
+            if (this._motionDetection) {
+                this.applyOptions(this._motionDetection, this._videoElement)
+            }
         })
 
         // Toggle sidebar
