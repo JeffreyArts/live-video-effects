@@ -36,7 +36,6 @@ export class PoseDetectionModel {
         this.pose.onResults(this.onResults.bind(this))
     }
 
-
     private getAverageZValue(): number {
         if (this.zValueCache.length === 0) return 0
         const sum = this.zValueCache.reduce((a, b) => a + b, 0)
@@ -275,6 +274,42 @@ export class PoseDetectionModel {
 
             bwContext.putImageData(imageData, 0, 0)
             this._poseCanvasBW = bwCanvas
+
+            // Maak een temp canvas en teken de zwart-witte canvas op deze canvas met een witte achtergrond
+            
+            let tempCanvas = document.body.querySelector('#tempCanvas') as HTMLCanvasElement
+            if (!tempCanvas) {
+                tempCanvas = document.createElement('canvas')
+                document.body.appendChild(tempCanvas)
+            }
+
+            tempCanvas.id = 'tempCanvas'
+            tempCanvas.width = this.canvas.width
+            tempCanvas.height = this.canvas.height
+            tempCanvas.style.position = 'absolute'
+            tempCanvas.style.top = '0'
+            tempCanvas.style.left = '0'
+            tempCanvas.style.zIndex = '1000'
+            tempCanvas.style.width = '100px'
+            tempCanvas.style.border = '1px solid red'
+            const tempContext = tempCanvas.getContext('2d')!
+
+            tempContext.fillStyle = 'white'
+            tempContext.filter = 'invert(1)'
+            tempContext.fillRect(0, 0, tempCanvas.width, tempCanvas.height)
+            tempContext.drawImage(bwCanvas, 0, 0)
+            // Invert colors
+
+
+            // Alleen emitten als het canvas beschikbaar is
+            if (tempCanvas) {
+                const poseEvent = new CustomEvent('poseUpdate', {
+                    detail: {
+                        canvas: tempCanvas
+                    }
+                })
+                document.dispatchEvent(poseEvent)
+            }
         }
     }
 

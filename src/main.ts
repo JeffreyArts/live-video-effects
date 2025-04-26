@@ -12,6 +12,9 @@ const webcam = new WebcamModel(optionsService)
 const motionDetection = new MotionDetectionService(optionsService)
 const imageLogicService = ImageLogicService.getInstance()
 
+// Grid voor pose-detectie grijswaarden
+let postureGrid: number[][] = []
+
 document.addEventListener("DOMContentLoaded", async () => {
     const options = optionsService.options
     const styles = optionsService.styles
@@ -214,6 +217,19 @@ document.addEventListener("DOMContentLoaded", async () => {
                     poseCtxBW.drawImage(poseCanvasBWData, 0, 0)
                 }
 
+                if (optionsService.options.usePoseStream) {
+                    for (let y = 0; y < motionGrid.length; y++) {                    
+                        for (let x = 0; x < motionGrid[y].length; x++) {
+                            if (postureGrid?.[y]?.[x] != undefined) {
+                                if (postureGrid[y][x] < 0.5) {
+                                }
+                                motionGrid[y][x] = postureGrid[y][x]
+                                // console.log(`Posture grid:${y},${x}`,postureGrid[y][x])
+                            }
+                        }
+                    }
+                }
+
                 if (optionsService.currentStyle.type == "image") {
                     for (let y = 0; y < motionGrid.length; y++) {
                         imageGrid[y] = []
@@ -236,7 +252,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         let motion = motionGrid[y][x]
 
                         if (optionsService.currentStyle.valueRange) {
-                            const step = 1 / (optionsService.currentStyle.valueRange - 1)
+                            const step = 1 / (optionsService.currentStyle.valueRange)
                             motion = Math.round(motion / step) * step
                         }
 
@@ -304,6 +320,50 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         update()
+
+        // Voeg event listener toe voor pose updates
+        document.addEventListener('poseUpdate', ((event: Event) => {
+            const customEvent = event as CustomEvent<{ canvas: HTMLCanvasElement }>
+            const poseCanvas = customEvent.detail.canvas
+            const ctx = poseCanvas.getContext('2d')
+            if (!ctx) return
+
+            const imageData = ctx.getImageData(0, 0, poseCanvas.width, poseCanvas.height)
+            const data = imageData.data
+            const gridSize = optionsService.options.gridSize
+            const cellWidth = poseCanvas.width / gridSize.x
+            const cellHeight = poseCanvas.height / gridSize.y
+
+            // Initialiseer het grid
+            postureGrid = Array(gridSize.y).fill(0).map(() => Array(gridSize.x).fill(0))
+
+            // Loop door het grid
+            for (let y = 0; y < gridSize.y; y++) {
+                for (let x = 0; x < gridSize.x; x++) {
+                    let totalBrightness = 0
+                    let pixelCount = 0
+
+                    // Bereken de grenzen van de huidige cel
+                    const startX = Math.floor(x * cellWidth)
+                    const startY = Math.floor(y * cellHeight)
+                    const endX = Math.min(startX + cellWidth, poseCanvas.width)
+                    const endY = Math.min(startY + cellHeight, poseCanvas.height)
+
+                    // Bereken de gemiddelde helderheid van de cel
+                    for (let py = startY; py < endY; py++) {
+                        for (let px = startX; px < endX; px++) {
+                            const index = (py * poseCanvas.width + px) * 4
+                            const brightness = (data[index] + data[index + 1] + data[index + 2]) / 3
+                            totalBrightness += brightness
+                            pixelCount++
+                        }
+                    }
+
+                    // Sla de gemiddelde helderheid op in het grid (genormaliseerd naar 0-1)
+                    postureGrid[y][x] = totalBrightness / (pixelCount * 255)
+                }
+            }
+        }) as EventListener)
     } catch (error) {
         console.error("Kon de webcam niet starten:", error)
     }
