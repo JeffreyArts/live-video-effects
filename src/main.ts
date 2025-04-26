@@ -7,10 +7,10 @@ import { iconsMap } from "jao-icons"
 
 
 // Basis setup voor de applicatie
-const webcam = new WebcamModel()
-const motionDetection = new MotionDetectionService()
-const imageLogicService = ImageLogicService.getInstance()
 const optionsService = new OptionsService()
+const webcam = new WebcamModel(optionsService)
+const motionDetection = new MotionDetectionService(optionsService)
+const imageLogicService = ImageLogicService.getInstance()
 
 document.addEventListener("DOMContentLoaded", async () => {
     const options = optionsService.options
@@ -87,6 +87,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         const canvas = document.querySelector("#outputResult") as HTMLCanvasElement
         const ctx = canvas.getContext("2d")!
 
+        // Haal het pose canvas op
+        const poseCanvas = document.querySelector("#poseCanvas") as HTMLCanvasElement
+        const poseCanvasBW = document.querySelector("#poseCanvasBW") as HTMLCanvasElement
+        const poseCtx = poseCanvas.getContext("2d")!
+        const poseCtxBW = poseCanvasBW.getContext("2d")!
+
         // Bereken eerst alle afbeeldingen
         const imageGrid: (number)[][] = []
         const cachedImages: { [key: string]: HTMLImageElement } = {}
@@ -94,7 +100,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         function updateCanvasSize() {
             const videoElement = document.querySelector("#webcam") as HTMLVideoElement
-            if (!videoElement || !ctx) return
+            if (!videoElement || !ctx || !poseCtx || !poseCtxBW) return
 
             // Wacht tot de video dimensies beschikbaar zijn
             if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) return
@@ -119,6 +125,16 @@ document.addEventListener("DOMContentLoaded", async () => {
             canvas.height = canvasHeight
             canvas.style.width = `${canvasWidth}px`
             canvas.style.height = `${canvasHeight}px`
+
+            poseCanvas.width = canvasWidth
+            poseCanvas.height = canvasHeight
+            poseCanvas.style.width = `${canvasWidth}px`
+            poseCanvas.style.height = `${canvasHeight}px`
+
+            poseCanvasBW.width = canvasWidth
+            poseCanvasBW.height = canvasHeight
+            poseCanvasBW.style.width = `${canvasWidth}px`
+            poseCanvasBW.style.height = `${canvasHeight}px`
         }
 
         // Voeg resize event listener toe
@@ -162,24 +178,32 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // Animation loop
         async function update() {
-            const webcamCanvas = webcam.currentImage
-            if (webcamCanvas && ctx) {
+            const sourceCanvas = optionsService.options.usePoseStream ? webcam.poseCanvas : webcam.currentImage
+            if (sourceCanvas && ctx) {
                 // Update canvas grootte om overeen te komen met video
-                if (canvas.width !== webcamCanvas.width || canvas.height !== webcamCanvas.height) {
-                    canvas.width = webcamCanvas.width
-                    canvas.height = webcamCanvas.height
+                if (canvas.width !== sourceCanvas.width || canvas.height !== sourceCanvas.height) {
+                    canvas.width = sourceCanvas.width
+                    canvas.height = sourceCanvas.height
+                    poseCanvas.width = sourceCanvas.width
+                    poseCanvas.height = sourceCanvas.height
                 }
 
                 // Clear vorige frame
                 ctx.clearRect(0, 0, canvas.width, canvas.height)
+                poseCtx.clearRect(0, 0, poseCanvas.width, poseCanvas.height)
 
                 // Bereken beweging
-                const motionGrid = motionDetection.analyzeFrame(webcamCanvas)
+                const motionGrid = motionDetection.analyzeFrame(sourceCanvas)
                 
                 // Teken bewegingsdetectie
                 const cellWidth = canvas.width / motionGrid[0].length
                 const cellHeight = canvas.height / motionGrid.length
 
+                // Update pose detection canvas
+                const poseCanvasData = webcam.poseCanvas
+                if (poseCanvasData && options.showPose) {
+                    poseCtx.drawImage(poseCanvasData, 0, 0)
+                }
 
                 if (optionsService.currentStyle.type == "image") {
                     for (let y = 0; y < motionGrid.length; y++) {

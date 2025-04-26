@@ -1,17 +1,22 @@
+import { OptionsService } from './options-service'
+import { WebcamModel } from './webcam'
+import { PoseDetectionModel } from './pose-detection'
+
 export class MotionDetectionService {
+    private optionsService: OptionsService
     private frameBuffer: ImageData[] = []
     private gridSize: { x: number; y: number }
     private bufferSize: number
     public significantChangeTreshold: number
+    private currentImage: ImageData | null = null
+    private buffer: ImageData[] = []
+    private lastProcessedImage: ImageData | null = null
 
-    constructor(
-        gridSize: { x: number; y: number } = { x: 9, y: 9 },
-        bufferSize: number = 10, // Aantal frames om te bufferen
-        significantChangeTreshold: number = 50
-    ) {
-        this.gridSize = gridSize
-        this.bufferSize = bufferSize
-        this.significantChangeTreshold = significantChangeTreshold
+    constructor(optionsService: OptionsService) {
+        this.optionsService = optionsService
+        this.gridSize = optionsService.options.gridSize
+        this.bufferSize = optionsService.options.bufferSize
+        this.significantChangeTreshold = optionsService.options.significantChangeThreshold
     }
 
     public reset(): void {
@@ -110,5 +115,108 @@ export class MotionDetectionService {
         
         // Knip af op 1
         return Math.min(normalizedValue, 1)
+    }
+
+    update(webcam: WebcamModel, poseDetection?: PoseDetectionModel): void {
+        if (!webcam.currentImage) return
+
+        // If usePoseStream is true, use pose detection results as input
+        if (this.optionsService.options.usePoseStream && poseDetection) {
+            // Get the pose detection canvas
+            const poseCanvas = poseDetection.getCanvas()
+            if (!poseCanvas) return
+
+            // Create a temporary canvas to draw the pose detection results
+            const tempCanvas = document.createElement('canvas')
+            tempCanvas.width = poseCanvas.width
+            tempCanvas.height = poseCanvas.height
+            const tempContext = tempCanvas.getContext('2d')
+            if (!tempContext) return
+
+            // Draw the pose detection results on the temporary canvas
+            tempContext.drawImage(poseCanvas, 0, 0)
+
+            // Get the image data from the temporary canvas
+            this.currentImage = tempContext.getImageData(0, 0, tempCanvas.width, tempCanvas.height)
+        } else {
+            // Use the webcam image as input
+            const canvas = webcam.currentImage
+            const context = canvas.getContext('2d')
+            if (!context) return
+            this.currentImage = context.getImageData(0, 0, canvas.width, canvas.height)
+        }
+
+        // Process the image
+        this.processImage()
+    }
+
+    private processImage(): void {
+        if (!this.currentImage) return
+
+        // Add current image to buffer
+        this.buffer.push(this.currentImage)
+        if (this.buffer.length > this.bufferSize) {
+            this.buffer.shift()
+        }
+
+        // Calculate average image
+        const averageImage = this.calculateAverageImage()
+        if (!averageImage) return
+
+        // Calculate difference between current and average image
+        const differenceImage = this.calculateDifferenceImage(this.currentImage, averageImage)
+        if (!differenceImage) return
+
+        // Process difference image
+        this.processDifferenceImage(differenceImage)
+    }
+
+    private calculateAverageImage(): ImageData | null {
+        if (this.buffer.length === 0) return null
+
+        const firstImage = this.buffer[0]
+        const averageImage = new ImageData(firstImage.width, firstImage.height)
+        const data = averageImage.data
+
+        // Initialize with zeros
+        for (let i = 0; i < data.length; i++) {
+            data[i] = 0
+        }
+
+        // Sum all images
+        for (const image of this.buffer) {
+            for (let i = 0; i < image.data.length; i++) {
+                data[i] += image.data[i]
+            }
+        }
+
+        // Calculate average
+        for (let i = 0; i < data.length; i++) {
+            data[i] = Math.round(data[i] / this.buffer.length)
+        }
+
+        return averageImage
+    }
+
+    private calculateDifferenceImage(current: ImageData, average: ImageData): ImageData | null {
+        if (current.width !== average.width || current.height !== average.height) return null
+
+        const differenceImage = new ImageData(current.width, current.height)
+        const data = differenceImage.data
+
+        for (let i = 0; i < current.data.length; i++) {
+            data[i] = Math.abs(current.data[i] - average.data[i])
+        }
+
+        return differenceImage
+    }
+
+    private processDifferenceImage(differenceImage: ImageData): void {
+        // Store the processed image for later use
+        this.lastProcessedImage = differenceImage
+    }
+
+    get processedImage(): ImageData | null {
+        return this.lastProcessedImage
     }
 } 

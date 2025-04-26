@@ -1,101 +1,139 @@
 <!doctype html>
 <html lang="en">
-  <head>
+
+<head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Webcam Image Generation</title>
     <link rel="stylesheet" href="/src/assets/sass/index.scss">
-  </head>
-  <body>
+</head>
+
+<body>
     <div id="app">
-      <video id="webcam" autoplay playsinline></video>
-      <canvas id="outputResult"></canvas>
-      <div class="sidebar">
-        <div class="option-group" name="Weergave">
-          <div class="option">
-            <input type="checkbox" id="showVideo">
-            <label for="showVideo">
-                Toon video
-            </label>
-          </div>
-          <div class="option">
-            <label for="styleSelect">
-              Visualisatiestijl
-              <i class="info">
-                <span class="info-icon">?</span>
-                <span class="info-details">Kies hoe de beweging wordt weergegeven</span>
-              </i>
-            </label>
-            <select id="styleSelect">
-              <!-- Stijlen worden via JavaScript toegevoegd -->
-            </select>
-          </div>
-        </div>
+        <video id="webcam" autoplay playsinline></video>
+        <canvas id="outputResult"></canvas>
+        <canvas id="poseCanvas"></canvas>
+        <canvas id="poseCanvasBW"></canvas>
 
-        <div class="option-group" name="Grid">
-          <div class="option">
-            <label for="gridX">
-              Horizontale hokjes
-              <i class="info">
-                <span class="info-icon">?</span>
-                <span class="info-details">Aantal hokjes horizontaal in het grid</span>
-              </i>
-            </label>
-            <div class="range-input">
-              <input type="range" id="gridX" min="3" max="360" value="0">
-              <input type="number" id="gridXValue" min="3" max="360" value="0">
-            </div>
-          </div>
-          <div class="option">
-            <label for="gridY">
-              Verticale hokjes
-              <i class="info">
-                <span class="info-icon">?</span>
-                <span class="info-details">Aantal hokjes verticaal in het grid</span>
-              </i>
-            </label>
-            <div class="range-input">
-              <input type="range" id="gridY" min="3" max="360" value="0">
-              <input type="number" id="gridYValue" min="3" max="360" value="0">
-            </div>
-          </div>
-        </div>
 
-        <div class="option-group" name="Buffer">
-          <div class="option">
-            <label for="buffer">
-              Frame buffer
-              <i class="info">
-                <span class="info-icon">?</span>
-                <span class="info-details">Aantal frames dat wordt gebruikt voor bewegingsdetectie, 3 geeft het beste resultaat</span>
-              </i>
-            </label>
-            <div class="range-input">
-              <input type="range" id="buffer" min="2" max="360" value="0">
-              <input type="number" id="bufferValue" min="2" max="360" value="0">
-            </div>
-          </div>
-        </div>
+        <div class="sidebar">
 
-        <div class="option-group" name="Bewegingsdetectie">
-          <div class="option">
-            <label for="threshold">
-              Bewegingsdrempel
-              <i class="info">
-                <span class="info-icon">?</span>
-                <span class="info-details">Hoeveel beweging nodig is om een verandering te detecteren</span>
-              </i>
-            </label>
-            <div class="range-input">
-              <input type="range" id="threshold" min="1" max="100" value="0">
-              <input type="number" id="thresholdValue" min="1" max="100" value="0">
+            <div class="option-group" name="Effect">
+                <div class="option">
+                    <label for="gridX">
+                        Horizontale hokjes
+                        <i class="info">
+                            <span class="info-icon">?</span>
+                            <span class="info-details">Aantal hokjes horizontaal in het grid</span>
+                        </i>
+                    </label>
+                    <div class="range-input">
+                        <input type="range" id="gridX" min="3" max="360" value="0">
+                        <input type="number" id="gridXValue" min="3" max="360" value="0">
+                    </div>
+                </div>
+                <div class="option">
+                    <label for="gridY">
+                        Verticale hokjes
+                        <i class="info">
+                            <span class="info-icon">?</span>
+                            <span class="info-details">Aantal hokjes verticaal in het grid</span>
+                        </i>
+                    </label>
+                    <div class="range-input">
+                        <input type="range" id="gridY" min="3" max="360" value="0">
+                        <input type="number" id="gridYValue" min="3" max="360" value="0">
+                    </div>
+                </div>
+                <div class="option">
+                    <label for="poseLineThickness">
+                        Lijndikte pose
+                        <i class="info">
+                            <span class="info-icon">?</span>
+                            <span class="info-details">Dikte van de pose detectie lijnen en stippen</span>
+                        </i>
+                    </label>
+                    <div class="range-input">
+                        <input type="range" id="poseLineThickness" min="1" max="144" value="2">
+                        <input type="number" id="poseLineThicknessValue" min="1" max="144" value="2">
+                    </div>
+                </div>
+                <div class="option">
+                    <label for="styleSelect">
+                        Visualisatiestijl
+                        <i class="info">
+                            <span class="info-icon">?</span>
+                            <span class="info-details">Kies hoe de beweging wordt weergegeven</span>
+                        </i>
+                    </label>
+                    <select id="styleSelect">
+                        <!-- Stijlen worden via JavaScript toegevoegd -->
+                    </select>
+                </div>
             </div>
-          </div>
+
+            <div class="option-group" name="Stream">
+                <div class="option">
+                    <input type="checkbox" id="usePoseStream">
+                    <label for="usePoseStream">
+                        Gebruik pose stream
+                    </label>
+                </div>
+                <div class="option" data-group="frameBuffer">
+                    <label for="buffer">
+                        Frame buffer
+                        <i class="info">
+                            <span class="info-icon">?</span>
+                            <span class="info-details">Aantal frames dat wordt gebruikt voor bewegingsdetectie, 3 geeft
+                                het beste resultaat</span>
+                        </i>
+                    </label>
+                    <div class="range-input">
+                        <input type="range" id="buffer" min="2" max="360" value="0">
+                        <input type="number" id="bufferValue" min="2" max="360" value="0">
+                    </div>
+                </div>
+                <div class="option" data-group="motionThreshold">
+                    <label for="threshold">
+                        Bewegingsdrempel
+                        <i class="info">
+                            <span class="info-icon">?</span>
+                            <span class="info-details">Hoeveel beweging nodig is om een verandering te detecteren</span>
+                        </i>
+                    </label>
+                    <div class="range-input">
+                        <input type="range" id="threshold" min="1" max="100" value="0">
+                        <input type="number" id="thresholdValue" min="1" max="100" value="0">
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="option-group" name="Weergave">
+                <div class="option">
+                    <input type="checkbox" id="showVideo">
+                    <label for="showVideo">
+                        Toon video
+                    </label>
+                </div>
+                <div class="option">
+                    <input type="checkbox" id="showPose">
+                    <label for="showPose">
+                        Toon pose (kleur)
+                    </label>
+                </div>
+                <div class="option">
+                    <input type="checkbox" id="showPoseBW">
+                    <label for="showPoseBW">
+                        Toon pose (zwart-wit)
+                    </label>
+                </div>
+            </div>
         </div>
-      </div>
-      <button class="toggle-button" id="toggleButton"></button>
+        <button class="toggle-button" id="toggleButton"></button>
     </div>
     <script type="module" src="/src/main.ts"></script>
-  </body>
+</body>
+
 </html>

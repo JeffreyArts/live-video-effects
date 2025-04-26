@@ -29,7 +29,8 @@ body {
 
 // Video en canvas stijlen
 #webcam,
-#outputResult {
+#outputResult,
+#poseCanvas {
   position: absolute;
   top: 0;
   left: 0;
@@ -45,6 +46,11 @@ body {
 
 #outputResult {
   z-index: 2;
+}
+
+#poseCanvas {
+  z-index: 3;
+  pointer-events: none;
 }
 
 // Sidebar stijlen

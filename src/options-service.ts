@@ -18,24 +18,37 @@ export interface Style {
 }
 
 export interface Options {
-    showVideo: boolean;
-    gridSize: {
-        x: number;
-        y: number;
-    };
-    bufferSize: number;
-    significantChangeThreshold: number;
-    selectedStyle: string;
+    showVideo: boolean
+    showPose: boolean
+    showPoseBW: boolean
+    usePoseStream: boolean
+    poseLineThickness: number
+    gridSize: { x: number; y: number }
+    bufferSize: number
+    significantChangeThreshold: number
+    selectedStyle: string
+    blockSize: number
+    threshold: number
+    poseLineWidth: number
+    visualizationStyle: 'grid' | 'heatmap' | 'contour'
 }
 
 const STORAGE_KEY = "webcam-options"
 
 const defaultOptions: Options = {
     showVideo: true,
-    gridSize: { x: 9, y: 9 },
-    bufferSize: 10,
-    significantChangeThreshold: 50,
-    selectedStyle: "Zwarte blokken"
+    showPose: false,
+    showPoseBW: false,
+    usePoseStream: false,
+    poseLineThickness: 2,
+    gridSize: { x: 0, y: 0 },
+    bufferSize: 0,
+    significantChangeThreshold: 0,
+    selectedStyle: 'Zwarte blokken',
+    blockSize: 8,
+    threshold: 30,
+    poseLineWidth: 2,
+    visualizationStyle: 'grid'
 }
 
 const styles: Style[] = [
@@ -357,11 +370,25 @@ export class OptionsService {
         }
     }
 
-    setGridSize(x: number, y: number): void {
-        this._options.gridSize = { x, y }
+    setShowPose(value: boolean): void {
+        this._options.showPose = value
         this.saveOptions()
-        if (this._motionDetection) {
-            this._motionDetection["gridSize"] = { x, y }
+        if (this._videoElement) {
+            const poseCanvas = document.getElementById("poseCanvas") as HTMLCanvasElement
+            if (poseCanvas) {
+                poseCanvas.style.display = value ? "block" : "none"
+            }
+        }
+    }
+
+    setShowPoseBW(value: boolean): void {
+        this._options.showPoseBW = value
+        this.saveOptions()
+        if (this._videoElement) {
+            const poseCanvasBW = document.getElementById("poseCanvasBW") as HTMLCanvasElement
+            if (poseCanvasBW) {
+                poseCanvasBW.style.display = value ? "block" : "none"
+            }
         }
     }
 
@@ -380,6 +407,52 @@ export class OptionsService {
         if (this._motionDetection) {
             this._motionDetection["significantChangeTreshold"] = value
         }
+    }
+
+    setPoseLineWidth(value: number): void {
+        this._options.poseLineWidth = value
+        this.saveOptions()
+    }
+
+    setUsePoseStream(value: boolean): void {
+        this._options.usePoseStream = value
+        this.saveOptions()
+        const sidebar = document.querySelector('.sidebar') as HTMLElement
+        if (sidebar) {
+            if (value) {
+                sidebar.classList.add('pose-active')
+            } else {
+                sidebar.classList.remove('pose-active')
+            }
+        }
+    }
+
+    setVisualizationStyle(value: 'grid' | 'heatmap' | 'contour'): void {
+        this._options.visualizationStyle = value
+        this.saveOptions()
+    }
+
+    setBlockSize(value: number): void {
+        this._options.blockSize = value
+        this.saveOptions()
+    }
+
+    setThreshold(value: number): void {
+        this._options.threshold = value
+        this.saveOptions()
+    }
+
+    setGridSize(x: number, y: number): void {
+        this._options.gridSize = { x, y }
+        this.saveOptions()
+        if (this._motionDetection) {
+            this._motionDetection["gridSize"] = { x, y }
+        }
+    }
+
+    setPoseLineThickness(value: number): void {
+        this._options.poseLineThickness = value
+        this.saveOptions()
     }
 
     applyOptions(motionDetection: MotionDetectionService, videoElement?: HTMLVideoElement): void {
@@ -503,6 +576,73 @@ export class OptionsService {
         toggleButton.addEventListener("click", () => {
             sidebar.classList.toggle("open")
         })
+
+        // Voeg event listener toe voor showPose checkbox
+        const showPoseCheckbox = document.getElementById("showPose") as HTMLInputElement
+        if (showPoseCheckbox) {
+            showPoseCheckbox.checked = this._options.showPose
+            showPoseCheckbox.addEventListener("change", (e) => {
+                this.setShowPose((e.target as HTMLInputElement).checked)
+            })
+        }
+
+        // Voeg event listener toe voor showPoseBW checkbox
+        const showPoseBWCheckbox = document.getElementById("showPoseBW") as HTMLInputElement
+        if (showPoseBWCheckbox) {
+            showPoseBWCheckbox.checked = this._options.showPoseBW
+            showPoseBWCheckbox.addEventListener("change", (e) => {
+                this.setShowPoseBW((e.target as HTMLInputElement).checked)
+            })
+        }
+
+        // Voeg event listener toe voor usePoseStream checkbox
+        const usePoseStreamCheckbox = document.getElementById("usePoseStream") as HTMLInputElement
+        if (usePoseStreamCheckbox) {
+            usePoseStreamCheckbox.checked = this._options.usePoseStream
+            usePoseStreamCheckbox.addEventListener("change", (e) => {
+                this.setUsePoseStream((e.target as HTMLInputElement).checked)
+            })
+        }
+
+        // Voeg event listener toe voor poseLineWidth slider
+        const poseLineWidthSlider = document.getElementById("poseLineWidth") as HTMLInputElement
+        const poseLineWidthValue = document.getElementById("poseLineWidthValue") as HTMLInputElement
+        if (poseLineWidthSlider && poseLineWidthValue) {
+            poseLineWidthSlider.value = this._options.poseLineWidth.toString()
+            poseLineWidthValue.value = this._options.poseLineWidth.toString()
+            
+            poseLineWidthSlider.addEventListener("input", (e) => {
+                const value = parseInt((e.target as HTMLInputElement).value)
+                poseLineWidthValue.value = value.toString()
+                this.setPoseLineWidth(value)
+            })
+            
+            poseLineWidthValue.addEventListener("change", (e) => {
+                const value = parseInt((e.target as HTMLInputElement).value)
+                poseLineWidthSlider.value = value.toString()
+                this.setPoseLineWidth(value)
+            })
+        }
+
+        // Voeg event listener toe voor poseLineThickness slider
+        const poseLineThicknessSlider = document.getElementById("poseLineThickness") as HTMLInputElement
+        const poseLineThicknessValue = document.getElementById("poseLineThicknessValue") as HTMLInputElement
+        if (poseLineThicknessSlider && poseLineThicknessValue) {
+            poseLineThicknessSlider.value = this._options.poseLineThickness.toString()
+            poseLineThicknessValue.value = this._options.poseLineThickness.toString()
+            
+            poseLineThicknessSlider.addEventListener("input", (e) => {
+                const value = parseInt((e.target as HTMLInputElement).value)
+                poseLineThicknessValue.value = value.toString()
+                this.setPoseLineThickness(value)
+            })
+            
+            poseLineThicknessValue.addEventListener("change", (e) => {
+                const value = parseInt((e.target as HTMLInputElement).value)
+                poseLineThicknessSlider.value = value.toString()
+                this.setPoseLineThickness(value)
+            })
+        }
 
         // Pas de initiële opties toe
         this.applyOptions(motionDetection, videoElement)
