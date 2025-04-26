@@ -472,13 +472,18 @@ export class OptionsService {
         this._motionDetection = motionDetection
         this._videoElement = videoElement
 
+        // Voeg pose-active class toe bij het laden als usePoseStream true is
+        const sidebar = document.querySelector('.sidebar') as HTMLElement
+        if (sidebar && this._options.usePoseStream) {
+            sidebar.classList.add('pose-active')
+        }
+
         const gridXInput = document.querySelector("#gridX") as HTMLInputElement
         const gridYInput = document.querySelector("#gridY") as HTMLInputElement
         const bufferInput = document.querySelector("#buffer") as HTMLInputElement
         const showVideoInput = document.querySelector("#showVideo") as HTMLInputElement
         const thresholdInput = document.querySelector("#threshold") as HTMLInputElement
         const styleSelect = document.querySelector("#styleSelect") as HTMLSelectElement
-        const sidebar = document.querySelector(".sidebar") as HTMLDivElement
         const toggleButton = document.querySelector(".toggle-button") as HTMLButtonElement
 
         // Vul de style select met opties
