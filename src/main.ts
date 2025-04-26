@@ -186,11 +186,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                     canvas.height = sourceCanvas.height
                     poseCanvas.width = sourceCanvas.width
                     poseCanvas.height = sourceCanvas.height
+                    poseCanvasBW.width = sourceCanvas.width
+                    poseCanvasBW.height = sourceCanvas.height
                 }
 
                 // Clear vorige frame
                 ctx.clearRect(0, 0, canvas.width, canvas.height)
                 poseCtx.clearRect(0, 0, poseCanvas.width, poseCanvas.height)
+                poseCtxBW.clearRect(0, 0, poseCanvasBW.width, poseCanvasBW.height)
 
                 // Bereken beweging
                 const motionGrid = motionDetection.analyzeFrame(sourceCanvas)
@@ -203,6 +206,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const poseCanvasData = webcam.poseCanvas
                 if (poseCanvasData && options.showPose) {
                     poseCtx.drawImage(poseCanvasData, 0, 0)
+                }
+
+                // Update zwart-witte pose detection canvas
+                const poseCanvasBWData = webcam.poseCanvasBW
+                if (poseCanvasBWData && options.showPoseBW) {
+                    poseCtxBW.drawImage(poseCanvasBWData, 0, 0)
                 }
 
                 if (optionsService.currentStyle.type == "image") {
