@@ -42,7 +42,7 @@ const defaultOptions: Options = {
     showPoseBW: false,
     usePoseStream: false,
     poseLineThickness: 2,
-    gridSize: { x: 0, y: 0 },
+    gridSize: { x: 1, y: 1 },
     bufferSize: 0,
     significantChangeThreshold: 0,
     selectedStyle: 'Zwarte blokken',
@@ -419,6 +419,9 @@ export class OptionsService {
     }
 
     setGridSize(x: number, y: number): void {
+        // Zorg ervoor dat x en y minimaal 1 zijn
+        x = Math.max(1, x);
+        y = Math.max(1, y);
         this._options.gridSize = { x, y }
         this.saveOptions()
         if (this._motionDetection) {
