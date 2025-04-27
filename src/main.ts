@@ -235,25 +235,32 @@ document.addEventListener("DOMContentLoaded", async () => {
                         let motion = motionGrid[y][x]
 
                         if (optionsService.currentStyle.valueRange) {
-                            const step = 1 / (optionsService.currentStyle.valueRange)
+                            const step = 1 / (optionsService.currentStyle.valueRange - 1)
                             motion = Math.round(motion / step) * step
                         }
 
-                        const value = optionsService.currentStyle.type === "text" ? 
-                            motion : 
-                            optionsService.currentStyle.values.find((s: StyleValue) => 
-                                (motion >= s.min! && motion <= s.max!) || 
-                                (motion === s.min! && motion === s.max!)
-                            )?.val || optionsService.currentStyle.values[0].val
+                        // Debug logging
+                        if (isNaN(motion)) {
+                            console.warn(`Ongeldige motion waarde gevonden: ${motion}. Originele waarde: ${motionGrid[y][x]}, valueRange: ${optionsService.currentStyle.valueRange}`)
+                            motion = 0 // Reset naar 0 als fallback
+                        }
 
-                        // ctx.fillStyle = optionsService.currentStyle.defaultValue || optionsService.currentStyle.values[0].val.toString()
+                        const value = optionsService.currentStyle.values.find((s: StyleValue) => {
+                            // Als min en max gelijk zijn, dan is het een exacte match
+                            if (s.min === s.max) {
+                                return motion === s.min
+                            }
+                            // Anders kijken we of de waarde binnen het bereik valt
+                            return motion >= s.min! && motion <= s.max!
+                        })?.val || optionsService.currentStyle.values[0].val
 
-                  
-
-                        if (typeof value == "string") {
+                        if (typeof value === "undefined") {
+                            console.warn(`Geen waarde gevonden voor motion: ${motion}. Gebruik fallback waarde.`)
+                            ctx.fillStyle = optionsService.currentStyle.defaultValue || "black"
+                        } else if (typeof value == "string") {
                             ctx.fillStyle = value
                         } else if (typeof value == "number") {
-                            ctx.fillStyle = optionsService.currentStyle.defaultValue || ""
+                            ctx.fillStyle = optionsService.currentStyle.defaultValue || "black"
                         }
 
                         if (optionsService.currentStyle.type == "rectangle") {
@@ -283,9 +290,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                             ctx.font = `${Math.min(cellWidth, cellHeight)}px Arial`
                             ctx.textAlign = "center"
                             ctx.textBaseline = "middle"
-                            const tmp = (Math.round(motion*10)/ 10).toString()
+                            // const tmp = (Math.round(motion*10)/ 10).toString()
                             ctx.fillText(
-                                tmp,
+                                value.toString(),
                                 x * cellWidth + cellWidth / 2,
                                 y * cellHeight + cellHeight / 2
                             )
