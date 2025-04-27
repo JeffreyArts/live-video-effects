@@ -1,5 +1,5 @@
-import { Pose } from '@mediapipe/pose'
-import { OptionsService } from './options-service'
+import { Pose } from "@mediapipe/pose"
+import { OptionsService } from "./options-service"
 
 export class PoseDetectionModel {
     private pose: Pose
@@ -16,17 +16,17 @@ export class PoseDetectionModel {
     constructor(videoElement: HTMLVideoElement, optionsService: OptionsService) {
         this.videoElement = videoElement
         this.optionsService = optionsService
-        this._poseCanvas = document.createElement('canvas')
-        this._webcamCanvas = document.createElement('canvas')
-        this._webcamCanvas.style.position = 'absolute'
-        this._webcamCanvas.style.top = '0'
-        this._webcamCanvas.style.left = '0'
-        this._webcamCanvas.style.zIndex = '1000'
-        this._webcamCanvas.style.width = '100px'
-        this._webcamCanvas.style.border = '1px solid red'
-        this._webcamCanvas.style.display = window.location.search.includes('?dev') ? 'block' : 'none'
+        this._poseCanvas = document.createElement("canvas")
+        this._webcamCanvas = document.createElement("canvas")
+        this._webcamCanvas.style.position = "absolute"
+        this._webcamCanvas.style.top = "0"
+        this._webcamCanvas.style.left = "0"
+        this._webcamCanvas.style.zIndex = "1000"
+        this._webcamCanvas.style.width = "100px"
+        this._webcamCanvas.style.border = "1px solid red"
+        this._webcamCanvas.style.display = window.location.search.includes("?dev") ? "block" : "none"
         document.body.appendChild(this._webcamCanvas)
-        this.context = this._poseCanvas.getContext('2d')!
+        this.context = this._poseCanvas.getContext("2d")!
         
         this.pose = new Pose({
             locateFile: (file) => {
@@ -96,8 +96,16 @@ export class PoseDetectionModel {
         // If usePoseStream is true or showPose is true, draw the pose detection visualization
         if (this.optionsService.options.usePoseStream || this.optionsService.options.showPose) {
             // Draw pose landmarks
-            this.context.strokeStyle = '#00FF00'
-            this.context.lineWidth = this.optionsService.options.poseLineThickness
+            this.context.strokeStyle = "#00FF00"
+            // Update z-waarde cache en bereken gemiddelde voor gebruik in hele tekening
+            this.updateZValueCache(results)
+            const averageZ = this.getAverageZValue()
+            const zFactor = Math.abs(averageZ)
+            
+            // Bereken de basis lijndikte die schaalt met diepte
+            const baseLineThickness = this.optionsService.options.poseLineThickness
+            const scaledLineThickness = Math.max(baseLineThickness / (1 + zFactor), baseLineThickness * 0.3)
+            this.context.lineWidth = scaledLineThickness
 
             // Draw connections between landmarks
             const connections = [
@@ -112,7 +120,7 @@ export class PoseDetectionModel {
             const rightHip = results.poseLandmarks[24]
 
             if (leftShoulder && rightShoulder && leftHip && rightHip) {
-                this.context.fillStyle = '#00FF00'
+                this.context.fillStyle = "#00FF00"
                 this.context.beginPath()
                 this.context.moveTo(leftShoulder.x * this._poseCanvas.width, leftShoulder.y * this._poseCanvas.height)
                 this.context.lineTo(rightShoulder.x * this._poseCanvas.width, rightShoulder.y * this._poseCanvas.height)
@@ -157,12 +165,12 @@ export class PoseDetectionModel {
                     this.context.stroke()
 
                     // Teken rode stip op het middelpunt
-                    this.context.fillStyle = '#FF0000'
+                    this.context.fillStyle = "#FF0000"
                     this.context.beginPath()
                     this.context.arc(
                         centerX * this._poseCanvas.width,
                         centerY * this._poseCanvas.height,
-                        this.optionsService.options.poseLineThickness/2,
+                        scaledLineThickness/2,
                         0,
                         2 * Math.PI
                     )
@@ -171,8 +179,8 @@ export class PoseDetectionModel {
             })
 
             // Teken rode stippen op alle landmarks (behalve gezicht en handlandmarks)
-            this.context.fillStyle = '#FF0000'
-            const dotRadius = this.optionsService.options.poseLineThickness/2
+            this.context.fillStyle = "#FF0000"
+            const dotRadius = scaledLineThickness/2
             results.poseLandmarks.forEach((landmark: any, index: number) => {
                 // Skip gezichtslandmarks (0-10) en handlandmarks (17-22)
                 if (landmark && index > 10 && (index < 17 || index > 22)) {
@@ -200,10 +208,6 @@ export class PoseDetectionModel {
                     maxY = Math.max(maxY, landmark.y * this._poseCanvas.height)
                 }
 
-                // Update z-waarde cache en bereken gemiddelde
-                this.updateZValueCache(results)
-                const averageZ = this.getAverageZValue()
-
                 // Bereken de basis grootte op basis van de huidige schouderafstand
                 const currentShoulderDistance = Math.sqrt(
                     Math.pow((results.poseLandmarks[12].x - results.poseLandmarks[11].x) * this._poseCanvas.width, 2) +
@@ -212,11 +216,12 @@ export class PoseDetectionModel {
                 
                 // Gebruik de huidige schouderafstand als basis, maar schaal direct met de z-waarde
                 const baseSize = currentShoulderDistance * 0.3
-                const zFactor = Math.abs(averageZ) // Gebruik absolute waarde van z
-                const size = baseSize / (zFactor + 0.5) // +0.5 om te voorkomen dat de deler te klein wordt
+                // Gebruik een minimale grootte om te voorkomen dat het hoofd verdwijnt
+                const minSize = currentShoulderDistance * 0.15
+                const size = Math.max(baseSize / (1 + zFactor), minSize)
 
                 // Teken het hoofd als een ovaal in groen
-                this.context.fillStyle = '#00FF00'
+                this.context.fillStyle = "#00FF00"
                 this.context.beginPath()
                 this.context.ellipse(
                     (minX + maxX) / 2,
@@ -250,7 +255,7 @@ export class PoseDetectionModel {
                     const headSize = (currentShoulderDistance * 0.15) / (zFactor + 0.5) * 2
                     
                     // Teken het hoofd in groen
-                    this.context.fillStyle = '#00FF00'
+                    this.context.fillStyle = "#00FF00"
                     this.context.beginPath()
                     this.context.arc(
                         nose.x * this._poseCanvas.width,
@@ -265,10 +270,10 @@ export class PoseDetectionModel {
         }
 
         // Create black and white version
-        const bwCanvas = document.createElement('canvas')
+        const bwCanvas = document.createElement("canvas")
         bwCanvas.width = this._poseCanvas.width
         bwCanvas.height = this._poseCanvas.height
-        const bwContext = bwCanvas.getContext('2d')!
+        const bwContext = bwCanvas.getContext("2d")!
         
         // Draw the pose in black and white
         bwContext.drawImage(this._poseCanvas, 0, 0)
@@ -289,15 +294,15 @@ export class PoseDetectionModel {
         this._poseCanvasBW = bwCanvas
 
         // Update webcam canvas
-        const webcamContext = this._webcamCanvas.getContext('2d')!
+        const webcamContext = this._webcamCanvas.getContext("2d")!
         webcamContext.clearRect(0, 0, this._webcamCanvas.width, this._webcamCanvas.height)
-        webcamContext.fillStyle = 'white'
-        webcamContext.filter = 'invert(1)'
+        webcamContext.fillStyle = "white"
+        webcamContext.filter = "invert(1)"
         webcamContext.fillRect(0, 0, this._webcamCanvas.width, this._webcamCanvas.height)
         webcamContext.drawImage(bwCanvas, 0, 0)
 
         // Dispatch event with webcam canvas
-        const poseEvent = new CustomEvent('poseUpdate', {
+        const poseEvent = new CustomEvent("poseUpdate", {
             detail: {
                 canvas: this._webcamCanvas
             }
