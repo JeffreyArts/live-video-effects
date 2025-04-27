@@ -40,21 +40,20 @@ export class MotionDetectionService {
             this.significantChangeTreshold = 1
         }
 
-        // Bereken alleen beweging als we genoeg frames hebben
-        if (this.frameBuffer.length >= 2) {
-            for (let y = 0; y < this.gridSize.y; y++) {
-                for (let x = 0; x < this.gridSize.x; x++) {
-                    // Bereken beweging tussen het huidige frame en het oudste frame in de buffer
-                    const motion = this.calculateCellMotion(
-                        x, y,
-                        cellWidth, cellHeight,
-                        this.frameBuffer[this.frameBuffer.length - 1], // Huidige frame
-                        this.frameBuffer[0], // Oudste frame in de buffer
-                        this.significantChangeTreshold
-                    )
-                    
-                    motionGrid[y][x] = motion
-                }
+        // Bereken beweging voor elk frame in de buffer
+        for (let y = 0; y < this.gridSize.y; y++) {
+            for (let x = 0; x < this.gridSize.x; x++) {
+                // Als we maar 1 frame hebben, vergelijk met hetzelfde frame
+                const previousFrame = this.frameBuffer.length > 1 ? this.frameBuffer[0] : this.frameBuffer[this.frameBuffer.length - 1]
+                const motion = this.calculateCellMotion(
+                    x, y,
+                    cellWidth, cellHeight,
+                    this.frameBuffer[this.frameBuffer.length - 1], // Huidige frame
+                    previousFrame,
+                    this.significantChangeTreshold
+                )
+                
+                motionGrid[y][x] = motion
             }
         }
 
