@@ -10,9 +10,9 @@
 }
 
 .dev-only {
-    display: none;
+    display: none !important;
 }
 
 body.dev .dev-only {
-    display: block;
+    display: block !important;
 }

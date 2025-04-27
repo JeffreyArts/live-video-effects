@@ -1,4 +1,4 @@
-import { OptionsService } from './options-service'
+import { OptionsService } from "./options-service"
 
 export class MotionDetectionService {
     private optionsService: OptionsService
@@ -36,6 +36,11 @@ export class MotionDetectionService {
             this.frameBuffer.shift()
         }
 
+        // Als we nog geen frames hebben om te vergelijken, return een lege grid
+        if (this.frameBuffer.length < 2) {
+            return motionGrid
+        }
+
         if (this.significantChangeTreshold <= 0) {
             this.significantChangeTreshold = 1
         }
@@ -61,8 +66,22 @@ export class MotionDetectionService {
     }
 
     private createEmptyGrid(): number[][] {
-        return Array(this.gridSize.y).fill(0).map(() => 
-            Array(this.gridSize.x).fill(0)
+        // Zorg ervoor dat de grid grootte altijd minimaal 1 is
+        let x = Math.max(1, Math.floor(this.gridSize.x))
+        let y = Math.max(1, Math.floor(this.gridSize.y))
+        
+        if (isNaN(x)) {
+            x = 1
+        }
+        if (isNaN(y)) {
+            y = 1
+        }
+
+        // Update de grid grootte in het model
+        this.gridSize = { x, y }
+        
+        return Array(y).fill(0).map(() => 
+            Array(x).fill(0)
         )
     }
 

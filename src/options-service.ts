@@ -42,9 +42,9 @@ const defaultOptions: Options = {
     showPoseBW: false,
     usePoseStream: false,
     poseLineThickness: 2,
-    gridSize: { x: 1, y: 1 },
-    bufferSize: 0,
-    significantChangeThreshold: 0,
+    gridSize: { x: 40, y: 40 },
+    bufferSize: 1,
+    significantChangeThreshold: 32,
     selectedStyle: "Zwarte blokken",
     blockSize: 8,
     threshold: 30,
@@ -103,10 +103,10 @@ const styles: Style[] = [
         values: [
             { min: 0, max: 0, val: "/image-styles/basic-corners/vert.png" },
             { min: 1, max: 1, val: "/image-styles/basic-corners/hor.png" },
-            { if: "t==1 && tl==1 && tr==1 && bl==1 && br==1&& c==0",  val: "/image-styles/basic-corners/empty.png" },
-            { if: "b==1 && bl==1 && br==1 && tl==1 && tr==1&& c==0",  val: "/image-styles/basic-corners/empty.png" },
-            { if: "l==1 && tl==1 && bl==1 && tr==1 && br==1&& c==0",  val: "/image-styles/basic-corners/empty.png" },
-            { if: "r==1 && tr==1 && br==1 && tl==1 && bl==1&& c==0",  val: "/image-styles/basic-corners/empty.png" },
+            { if: "t==1 && tl==1 && tr==1 && bl==1 && br==1&& c==0",  val: "/image-styles/basic-corners/leeg.png" },
+            { if: "b==1 && bl==1 && br==1 && tl==1 && tr==1&& c==0",  val: "/image-styles/basic-corners/leeg.png" },
+            { if: "l==1 && tl==1 && bl==1 && tr==1 && br==1&& c==0",  val: "/image-styles/basic-corners/leeg.png" },
+            { if: "r==1 && tr==1 && br==1 && tl==1 && bl==1&& c==0",  val: "/image-styles/basic-corners/leeg.png" },
             { if: "r==1 && c==1 && l==0",  val: "/image-styles/basic-corners/hor-r.png" },
             { if: "l==1 && c==1 && r==0",  val: "/image-styles/basic-corners/hor-l.png" },
             { if: "b==1 && br==1 && bl==1 && c==0",  val: "/image-styles/basic-corners/vert-t.png" },
@@ -291,6 +291,11 @@ export class OptionsService {
     private _videoElement?: HTMLVideoElement
 
     constructor() {
+        // Bereken de grid grootte op basis van de schermresolutie
+        const minDimension = Math.min(window.innerWidth, window.innerHeight)
+        const gridSize = Math.floor(minDimension / 40) // 40 vakjes over de smalste zijde
+        defaultOptions.gridSize = { x: gridSize, y: gridSize }
+
         this._options = this.loadOptions()
         this._styles = styles
         this._currentStyle = this.getStyleByName(this._options.selectedStyle) || styles[0]
@@ -300,7 +305,13 @@ export class OptionsService {
         try {
             const stored = localStorage.getItem(STORAGE_KEY)
             if (stored) {
-                return { ...defaultOptions, ...JSON.parse(stored) }
+                const loadedOptions = JSON.parse(stored)
+                // Zorg ervoor dat de grid grootte altijd minimaal 1 is
+                if (loadedOptions.gridSize) {
+                    loadedOptions.gridSize.x = Math.max(1, Math.floor(loadedOptions.gridSize.x))
+                    loadedOptions.gridSize.y = Math.max(1, Math.floor(loadedOptions.gridSize.y))
+                }
+                return { ...defaultOptions, ...loadedOptions }
             }
         } catch (error) {
             console.error("Kon opgeslagen opties niet laden:", error)
@@ -412,8 +423,8 @@ export class OptionsService {
 
     setGridSize(x: number, y: number): void {
         // Zorg ervoor dat x en y minimaal 1 zijn
-        x = Math.max(1, x)
-        y = Math.max(1, y)
+        x = Math.max(1, Math.floor(x))
+        y = Math.max(1, Math.floor(y))
         this._options.gridSize = { x, y }
         this.saveOptions()
         if (this._motionDetection) {
