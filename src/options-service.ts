@@ -393,14 +393,6 @@ export class OptionsService {
     setUsePoseStream(value: boolean): void {
         this._options.usePoseStream = value
         this.saveOptions()
-        const sidebar = document.querySelector('.sidebar') as HTMLElement
-        if (sidebar) {
-            if (value) {
-                sidebar.classList.add('pose-active')
-            } else {
-                sidebar.classList.remove('pose-active')
-            }
-        }
     }
 
     setVisualizationStyle(value: 'grid' | 'heatmap' | 'contour'): void {
@@ -456,9 +448,9 @@ export class OptionsService {
         this._motionDetection = motionDetection
         this._videoElement = videoElement
 
-        // Voeg pose-active class toe bij het laden als usePoseStream true is
+        // Voeg pose-active class standaard toe aan de sidebar
         const sidebar = document.querySelector('.sidebar') as HTMLElement
-        if (sidebar && this._options.usePoseStream) {
+        if (sidebar) {
             sidebar.classList.add('pose-active')
         }
 

@@ -342,5 +342,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
         return value
     }
+
+    // Check if we're in dev mode
+    if (window.location.search.includes('?dev')) {
+        document.body.classList.add('dev');
+    }
 })
 
