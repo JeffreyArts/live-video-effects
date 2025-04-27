@@ -35,12 +35,7 @@ export class MotionDetectionService {
         if (this.frameBuffer.length > this.bufferSize) {
             this.frameBuffer.shift()
         }
-
-        // Als we nog geen frames hebben om te vergelijken, return een lege grid
-        if (this.frameBuffer.length < 2) {
-            return motionGrid
-        }
-
+        
         if (this.significantChangeTreshold <= 0) {
             this.significantChangeTreshold = 1
         }
