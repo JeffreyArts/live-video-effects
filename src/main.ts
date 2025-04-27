@@ -278,8 +278,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                             ctx.font = `${Math.min(cellWidth, cellHeight)}px Arial`
                             ctx.textAlign = "center"
                             ctx.textBaseline = "middle"
+                            const tmp = (Math.round(motion*10)/ 10).toString()
                             ctx.fillText(
-                                value.toString(),
+                                tmp,
                                 x * cellWidth + cellWidth / 2,
                                 y * cellHeight + cellHeight / 2
                             )
