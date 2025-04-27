@@ -135,6 +135,12 @@
             }
         }
 
+        &:disabled {
+            background-color: #ccc;
+            + label {
+                opacity: .5;
+            }
+        }
         &:checked {
             background-color: var(--accent-color);
             + label {

@@ -604,8 +604,15 @@ export class OptionsService {
         const usePoseStreamCheckbox = document.getElementById("usePoseStream") as HTMLInputElement
         if (usePoseStreamCheckbox) {
             usePoseStreamCheckbox.checked = this._options.usePoseStream
+            usePoseStreamCheckbox.disabled = true // Begin met disabled
             usePoseStreamCheckbox.addEventListener("change", (e) => {
                 this.setUsePoseStream((e.target as HTMLInputElement).checked)
+            })
+
+            // Voeg event listener toe voor pose detection status
+            document.addEventListener('poseUpdate', () => {
+                // Als er een poseUpdate event is, betekent dit dat de pose detection actief is
+                usePoseStreamCheckbox.disabled = false
             })
         }
 
