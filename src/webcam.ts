@@ -9,6 +9,7 @@ export class WebcamModel {
     private poseDetection: PoseDetectionModel | null = null
     private animationFrameId: number | null = null
     private optionsService: OptionsService
+    private isPoseDetectionInitialized: boolean = false
 
     constructor(optionsService: OptionsService) {
         this.optionsService = optionsService
@@ -44,6 +45,11 @@ export class WebcamModel {
         const processFrame = async () => {
             if (this.poseDetection) {
                 await this.poseDetection.processFrame()
+            }
+            if (!this.isPoseDetectionInitialized) {
+                this.isPoseDetectionInitialized = true
+                const poseDetectionInitializedEvent = new CustomEvent("poseDetectionInitialized")
+                document.dispatchEvent(poseDetectionInitializedEvent)
             }
             this.animationFrameId = requestAnimationFrame(processFrame)
         }
