@@ -1,6 +1,4 @@
 import { OptionsService } from './options-service'
-import { WebcamModel } from './webcam'
-import { PoseDetectionModel } from './pose-detection'
 
 export class MotionDetectionService {
     private optionsService: OptionsService
@@ -8,8 +6,6 @@ export class MotionDetectionService {
     private gridSize: { x: number; y: number }
     private bufferSize: number
     public significantChangeTreshold: number
-    private currentImage: ImageData | null = null
-    private buffer: ImageData[] = []
     private lastProcessedImage: ImageData | null = null
 
     constructor(optionsService: OptionsService) {
