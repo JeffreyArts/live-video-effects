@@ -23,8 +23,15 @@ export class WebcamModel {
 
     private async initializeDeviceSelection() {
         try {
+            // Vraag eerst toestemming voor camera toegang
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+            stream.getTracks().forEach(track => track.stop())
+            
             const devices = await navigator.mediaDevices.enumerateDevices()
             this.availableDevices = devices.filter(device => device.kind === "videoinput")
+            
+            // Laad opgeslagen device ID uit localStorage
+            const savedDeviceId = localStorage.getItem("selectedCameraId")
             
             // Update de camera select dropdown
             const cameraSelect = document.getElementById("cameraSelect") as HTMLSelectElement
@@ -33,17 +40,24 @@ export class WebcamModel {
                     `<option value="${device.deviceId}">${device.label || `Camera ${device.deviceId}`}</option>`
                 ).join("")
                 
-                // Selecteer de eerste camera als default
-                if (this.availableDevices.length > 0) {
+                // Selecteer de opgeslagen camera of de eerste beschikbare
+                if (savedDeviceId && this.availableDevices.some(device => device.deviceId === savedDeviceId)) {
+                    this.selectedDeviceId = savedDeviceId
+                    cameraSelect.value = savedDeviceId
+                } else if (this.availableDevices.length > 0) {
                     this.selectedDeviceId = this.availableDevices[0].deviceId
                     cameraSelect.value = this.selectedDeviceId
+                    localStorage.setItem("selectedCameraId", this.selectedDeviceId)
                 }
 
                 // Voeg event listener toe voor camera wisseling
                 cameraSelect.addEventListener("change", async (e) => {
                     const target = e.target as HTMLSelectElement
                     this.selectedDeviceId = target.value
+                    localStorage.setItem("selectedCameraId", this.selectedDeviceId)
                     await this.restart()
+                    // Ververs de pagina na het wisselen van camera
+                    window.location.reload()
                 })
             }
         } catch (error) {
@@ -53,6 +67,12 @@ export class WebcamModel {
 
     async start(): Promise<void> {
         try {
+            // Laad de opgeslagen camera ID
+            const savedDeviceId = localStorage.getItem("selectedCameraId")
+            if (savedDeviceId) {
+                this.selectedDeviceId = savedDeviceId
+            }
+
             const constraints: MediaStreamConstraints = {
                 video: {
                     width: { ideal: 1920 },
