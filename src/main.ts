@@ -178,7 +178,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // Animation loop
         async function update() {
-            const sourceCanvas = optionsService.options.usePoseStream ? webcam.poseCanvas : webcam.currentImage
+            const sourceCanvas = optionsService.options.usePoseStream ? webcam.webcamCanvas : webcam.currentImage
             if (sourceCanvas && ctx) {
                 // Update canvas grootte om overeen te komen met video
                 if (canvas.width !== sourceCanvas.width || canvas.height !== sourceCanvas.height) {
@@ -205,12 +205,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                 // Update pose detection canvas
                 const poseCanvasData = webcam.poseCanvas
                 if (poseCanvasData && options.showPose) {
+                    poseCtx.clearRect(0, 0, poseCanvas.width, poseCanvas.height)
                     poseCtx.drawImage(poseCanvasData, 0, 0)
                 }
 
                 // Update zwart-witte pose detection canvas
                 const poseCanvasBWData = webcam.poseCanvasBW
                 if (poseCanvasBWData && options.showPoseBW) {
+                    poseCtxBW.clearRect(0, 0, poseCanvasBW.width, poseCanvasBW.height)
                     poseCtxBW.drawImage(poseCanvasBWData, 0, 0)
                 }
                 if (optionsService.currentStyle.type == "image") {

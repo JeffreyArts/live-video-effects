@@ -24,6 +24,7 @@ export class PoseDetectionModel {
         this._webcamCanvas.style.zIndex = '1000'
         this._webcamCanvas.style.width = '100px'
         this._webcamCanvas.style.border = '1px solid red'
+        this._webcamCanvas.style.display = window.location.search.includes('?dev') ? 'block' : 'none'
         document.body.appendChild(this._webcamCanvas)
         this.context = this._poseCanvas.getContext('2d')!
         
@@ -92,7 +93,7 @@ export class PoseDetectionModel {
         // Clear canvas
         this.context.clearRect(0, 0, this._poseCanvas.width, this._poseCanvas.height)
 
-        // If usePoseStream is true, draw the pose detection visualization
+        // If usePoseStream is true or showPose is true, draw the pose detection visualization
         if (this.optionsService.options.usePoseStream || this.optionsService.options.showPose) {
             // Draw pose landmarks
             this.context.strokeStyle = '#00FF00'
@@ -261,47 +262,47 @@ export class PoseDetectionModel {
                     this.context.fill()
                 }
             }
-
-            // Create black and white version
-            const bwCanvas = document.createElement('canvas')
-            bwCanvas.width = this._poseCanvas.width
-            bwCanvas.height = this._poseCanvas.height
-            const bwContext = bwCanvas.getContext('2d')!
-            
-            // Draw the pose in black and white
-            bwContext.drawImage(this._poseCanvas, 0, 0)
-            const imageData = bwContext.getImageData(0, 0, bwCanvas.width, bwCanvas.height)
-            const data = imageData.data
-
-            // Convert to black and white (no grayscale)
-            for (let i = 0; i < data.length; i += 4) {
-                const avg = (data[i] + data[i + 1] + data[i + 2]) / 3
-                const bwValue = avg > 127 ? 255 : 0 // Drempelwaarde voor zwart/wit
-                
-                data[i] = bwValue // R
-                data[i + 1] = bwValue // G
-                data[i + 2] = bwValue // B
-            }
-
-            bwContext.putImageData(imageData, 0, 0)
-            this._poseCanvasBW = bwCanvas
-
-            // Update webcam canvas
-            const webcamContext = this._webcamCanvas.getContext('2d')!
-            webcamContext.clearRect(0, 0, this._webcamCanvas.width, this._webcamCanvas.height)
-            webcamContext.fillStyle = 'white'
-            webcamContext.filter = 'invert(1)'
-            webcamContext.fillRect(0, 0, this._webcamCanvas.width, this._webcamCanvas.height)
-            webcamContext.drawImage(bwCanvas, 0, 0)
-
-            // Dispatch event with webcam canvas
-            const poseEvent = new CustomEvent('poseUpdate', {
-                detail: {
-                    canvas: this._webcamCanvas
-                }
-            })
-            document.dispatchEvent(poseEvent)
         }
+
+        // Create black and white version
+        const bwCanvas = document.createElement('canvas')
+        bwCanvas.width = this._poseCanvas.width
+        bwCanvas.height = this._poseCanvas.height
+        const bwContext = bwCanvas.getContext('2d')!
+        
+        // Draw the pose in black and white
+        bwContext.drawImage(this._poseCanvas, 0, 0)
+        const imageData = bwContext.getImageData(0, 0, bwCanvas.width, bwCanvas.height)
+        const data = imageData.data
+
+        // Convert to black and white (no grayscale)
+        for (let i = 0; i < data.length; i += 4) {
+            const avg = (data[i] + data[i + 1] + data[i + 2]) / 3
+            const bwValue = avg > 127 ? 255 : 0 // Drempelwaarde voor zwart/wit
+            
+            data[i] = bwValue // R
+            data[i + 1] = bwValue // G
+            data[i + 2] = bwValue // B
+        }
+
+        bwContext.putImageData(imageData, 0, 0)
+        this._poseCanvasBW = bwCanvas
+
+        // Update webcam canvas
+        const webcamContext = this._webcamCanvas.getContext('2d')!
+        webcamContext.clearRect(0, 0, this._webcamCanvas.width, this._webcamCanvas.height)
+        webcamContext.fillStyle = 'white'
+        webcamContext.filter = 'invert(1)'
+        webcamContext.fillRect(0, 0, this._webcamCanvas.width, this._webcamCanvas.height)
+        webcamContext.drawImage(bwCanvas, 0, 0)
+
+        // Dispatch event with webcam canvas
+        const poseEvent = new CustomEvent('poseUpdate', {
+            detail: {
+                canvas: this._webcamCanvas
+            }
+        })
+        document.dispatchEvent(poseEvent)
     }
 
     async processFrame() {

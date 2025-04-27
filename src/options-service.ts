@@ -545,6 +545,7 @@ export class OptionsService {
         const showPoseCheckbox = document.getElementById("showPose") as HTMLInputElement
         if (showPoseCheckbox) {
             showPoseCheckbox.checked = this._options.showPose
+            showPoseCheckbox.disabled = true // Begin met disabled
             showPoseCheckbox.addEventListener("change", (e) => {
                 this.setShowPose((e.target as HTMLInputElement).checked)
             })
@@ -554,6 +555,7 @@ export class OptionsService {
         const showPoseBWCheckbox = document.getElementById("showPoseBW") as HTMLInputElement
         if (showPoseBWCheckbox) {
             showPoseBWCheckbox.checked = this._options.showPoseBW
+            showPoseBWCheckbox.disabled = true // Begin met disabled
             showPoseBWCheckbox.addEventListener("change", (e) => {
                 this.setShowPoseBW((e.target as HTMLInputElement).checked)
             })
@@ -563,10 +565,10 @@ export class OptionsService {
         const usePoseStreamCheckbox = document.getElementById("usePoseStream") as HTMLInputElement
         if (usePoseStreamCheckbox) {
             usePoseStreamCheckbox.checked = this._options.usePoseStream
-            usePoseStreamCheckbox.disabled = true // Begin met disabled
 
             const poseUpdateHandler = () => {
-                usePoseStreamCheckbox.disabled = false
+                showPoseCheckbox.disabled = false
+                showPoseBWCheckbox.disabled = false
                 document.removeEventListener('poseDetectionInitialized', poseUpdateHandler)
             }
 
