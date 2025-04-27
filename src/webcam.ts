@@ -4,6 +4,8 @@ import { OptionsService } from './options-service'
 export class WebcamModel {
     private stream: MediaStream | null = null
     private videoElement: HTMLVideoElement | null = null
+    private canvas: HTMLCanvasElement | null = null
+    private context: CanvasRenderingContext2D | null = null
     private poseDetection: PoseDetectionModel | null = null
     private animationFrameId: number | null = null
     private optionsService: OptionsService
@@ -12,6 +14,8 @@ export class WebcamModel {
     constructor(optionsService: OptionsService) {
         this.optionsService = optionsService
         this.videoElement = document.createElement("video")
+        this.canvas = document.createElement("canvas")
+        this.context = this.canvas.getContext("2d")
     }
 
     async start(): Promise<void> {
@@ -83,7 +87,6 @@ export class WebcamModel {
     get poseCanvasBW(): HTMLCanvasElement | null {
         return this.poseDetection?.poseCanvasBW || null
     }
-
     get webcamCanvas(): HTMLCanvasElement | null {
         return this.poseDetection?.webcamCanvas || null
     }

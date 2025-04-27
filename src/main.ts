@@ -205,14 +205,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                 // Update pose detection canvas
                 const poseCanvasData = webcam.poseCanvas
                 if (poseCanvasData && options.showPose) {
-                    poseCtx.clearRect(0, 0, poseCanvas.width, poseCanvas.height)
                     poseCtx.drawImage(poseCanvasData, 0, 0)
                 }
 
                 // Update zwart-witte pose detection canvas
                 const poseCanvasBWData = webcam.poseCanvasBW
                 if (poseCanvasBWData && options.showPoseBW) {
-                    poseCtxBW.clearRect(0, 0, poseCanvasBW.width, poseCanvasBW.height)
                     poseCtxBW.drawImage(poseCanvasBWData, 0, 0)
                 }
                 if (optionsService.currentStyle.type == "image") {
