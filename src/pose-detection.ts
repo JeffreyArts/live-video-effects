@@ -8,6 +8,7 @@ export class PoseDetectionModel {
     private videoElement: HTMLVideoElement
     private optionsService: OptionsService
     private _poseCanvasBW: HTMLCanvasElement | null = null
+    private _webcamCanvas: HTMLCanvasElement
     private zValueCache: number[] = []
     private readonly CACHE_SIZE = 30
     private maxShoulderDistance: number = 0
@@ -16,6 +17,14 @@ export class PoseDetectionModel {
         this.videoElement = videoElement
         this.optionsService = optionsService
         this._poseCanvas = document.createElement('canvas')
+        this._webcamCanvas = document.createElement('canvas')
+        this._webcamCanvas.style.position = 'absolute'
+        this._webcamCanvas.style.top = '0'
+        this._webcamCanvas.style.left = '0'
+        this._webcamCanvas.style.zIndex = '1000'
+        this._webcamCanvas.style.width = '100px'
+        this._webcamCanvas.style.border = '1px solid red'
+        document.body.appendChild(this._webcamCanvas)
         this.context = this._poseCanvas.getContext('2d')!
         
         this.pose = new Pose({
@@ -77,6 +86,8 @@ export class PoseDetectionModel {
         // Update canvas size to match video
         this._poseCanvas.width = this.videoElement.videoWidth
         this._poseCanvas.height = this.videoElement.videoHeight
+        this._webcamCanvas.width = this.videoElement.videoWidth
+        this._webcamCanvas.height = this.videoElement.videoHeight
 
         // Clear canvas
         this.context.clearRect(0, 0, this._poseCanvas.width, this._poseCanvas.height)
@@ -275,40 +286,21 @@ export class PoseDetectionModel {
             bwContext.putImageData(imageData, 0, 0)
             this._poseCanvasBW = bwCanvas
 
-            // Maak een temp canvas voor het event met witte achtergrond
-            let tempCanvas = document.body.querySelector('#tempCanvas') as HTMLCanvasElement
-            if (!tempCanvas) {
-                tempCanvas = document.createElement('canvas')
-                document.body.appendChild(tempCanvas)
-            }
+            // Update webcam canvas
+            const webcamContext = this._webcamCanvas.getContext('2d')!
+            webcamContext.clearRect(0, 0, this._webcamCanvas.width, this._webcamCanvas.height)
+            webcamContext.fillStyle = 'white'
+            // webcamContext.filter = 'invert(1)'
+            webcamContext.fillRect(0, 0, this._webcamCanvas.width, this._webcamCanvas.height)
+            webcamContext.drawImage(bwCanvas, 0, 0)
 
-            tempCanvas.id = 'tempCanvas'
-            tempCanvas.width = this._poseCanvas.width
-            tempCanvas.height = this._poseCanvas.height
-            tempCanvas.style.position = 'absolute'
-            tempCanvas.style.top = '0'
-            tempCanvas.style.left = '0'
-            tempCanvas.style.zIndex = '1000'
-            tempCanvas.style.width = '100px'
-            tempCanvas.style.border = '1px solid red'
-            const tempContext = tempCanvas.getContext('2d')!
-
-            tempContext.clearRect(0, 0, tempCanvas.width, tempCanvas.height)
-            tempContext.fillStyle = 'white'
-            tempContext.filter = 'invert(1)'
-            tempContext.fillRect(0, 0, tempCanvas.width, tempCanvas.height)
-            tempContext.drawImage(bwCanvas, 0, 0)
-            // tempContext.filter = 'invert(0)'
-
-            // Alleen emitten als het canvas beschikbaar is
-            if (tempCanvas) {
-                const poseEvent = new CustomEvent('poseUpdate', {
-                    detail: {
-                        canvas: tempCanvas
-                    }
-                })
-                document.dispatchEvent(poseEvent)
-            }
+            // Dispatch event with webcam canvas
+            const poseEvent = new CustomEvent('poseUpdate', {
+                detail: {
+                    canvas: this._webcamCanvas
+                }
+            })
+            document.dispatchEvent(poseEvent)
         }
     }
 
@@ -329,6 +321,10 @@ export class PoseDetectionModel {
     }
     
     getCanvas(): HTMLCanvasElement {
-        return this._poseCanvasBW
+        return this._webcamCanvas
+    }
+
+    get webcamCanvas(): HTMLCanvasElement {
+        return this._webcamCanvas
     }
 } 

@@ -239,11 +239,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                             motion = Math.round(motion / step) * step
                         }
 
-                        const value = optionsService.currentStyle.values.find((s: StyleValue) => 
-                            (motion >= s.min! && motion < s.max!) || 
-                            (motion === s.min! && motion === s.max!)
-                        )?.val || optionsService.currentStyle.values[0].val
+                        const value = optionsService.currentStyle.type === "text" ? 
+                            motion : 
+                            optionsService.currentStyle.values.find((s: StyleValue) => 
+                                (motion >= s.min! && motion <= s.max!) || 
+                                (motion === s.min! && motion === s.max!)
+                            )?.val || optionsService.currentStyle.values[0].val
 
+                        // ctx.fillStyle = optionsService.currentStyle.defaultValue || optionsService.currentStyle.values[0].val.toString()
+
+                  
 
                         if (typeof value == "string") {
                             ctx.fillStyle = value

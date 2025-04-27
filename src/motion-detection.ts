@@ -116,7 +116,12 @@ export class MotionDetectionService {
         // Als onlyMotionDetection false is, neem de helderheid mee
         if (!this.optionsService.options.onlyMotionDetection) {
             const averageBrightness = totalBrightness / (pixelCount * 255) // Normaliseer naar 0-1
-            normalizedValue = (normalizedValue + averageBrightness) / 2 // Gemiddelde van beweging en helderheid
+            // Als we de pose stream gebruiken, neem alleen de helderheid mee voor witte pixels
+            if (this.optionsService.options.usePoseStream) {
+                normalizedValue = averageBrightness > 0.5 ? 1 : normalizedValue
+            } else {
+                normalizedValue = (normalizedValue + averageBrightness) / 2 // Gemiddelde van beweging en helderheid
+            }
         }
         
         // Knip af op 1

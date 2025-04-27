@@ -81,13 +81,7 @@ export class WebcamModel {
     }
 
     get poseCanvas(): HTMLCanvasElement | null {
-        return this.poseDetection?.poseCanvas || null
-    }
-
-    set poseCanvas(canvas: HTMLCanvasElement | null) {
-        if (this.poseDetection && canvas) {
-            this.poseDetection.poseCanvas = canvas
-        }
+        return this.poseDetection?.webcamCanvas || null
     }
 
     get poseCanvasBW(): HTMLCanvasElement | null {
