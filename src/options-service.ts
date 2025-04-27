@@ -31,6 +31,7 @@ export interface Options {
     threshold: number
     poseLineWidth: number
     visualizationStyle: 'grid' | 'heatmap' | 'contour'
+    onlyMotionDetection: boolean
 }
 
 const STORAGE_KEY = "webcam-options"
@@ -48,7 +49,8 @@ const defaultOptions: Options = {
     blockSize: 8,
     threshold: 30,
     poseLineWidth: 2,
-    visualizationStyle: 'grid'
+    visualizationStyle: 'grid',
+    onlyMotionDetection: true
 }
 
 const styles: Style[] = [
@@ -455,6 +457,11 @@ export class OptionsService {
         this.saveOptions()
     }
 
+    setOnlyMotionDetection(value: boolean): void {
+        this._options.onlyMotionDetection = value
+        this.saveOptions()
+    }
+
     applyOptions(motionDetection: MotionDetectionService, videoElement?: HTMLVideoElement): void {
         this._motionDetection = motionDetection
         this._videoElement = videoElement
@@ -613,8 +620,8 @@ export class OptionsService {
 
             document.addEventListener('poseDetectionInitialized', poseUpdateHandler)
 
-            usePoseStreamCheckbox.addEventListener("change", (e) => {
-                this.setUsePoseStream((e.target as HTMLInputElement).checked)
+            usePoseStreamCheckbox.addEventListener("change", () => {
+                this.setUsePoseStream(usePoseStreamCheckbox.checked)
             })
         }
 
@@ -655,6 +662,15 @@ export class OptionsService {
                 const value = parseInt((e.target as HTMLInputElement).value)
                 poseLineThicknessSlider.value = value.toString()
                 this.setPoseLineThickness(value)
+            })
+        }
+
+        // Voeg event listener toe voor onlyMotionDetection checkbox
+        const onlyMotionDetectionCheckbox = document.getElementById("onlyMotionDetection") as HTMLInputElement
+        if (onlyMotionDetectionCheckbox) {
+            onlyMotionDetectionCheckbox.checked = this._options.onlyMotionDetection
+            onlyMotionDetectionCheckbox.addEventListener("change", () => {
+                this.setOnlyMotionDetection(onlyMotionDetectionCheckbox.checked)
             })
         }
 

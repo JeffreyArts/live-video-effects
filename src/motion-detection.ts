@@ -80,6 +80,7 @@ export class MotionDetectionService {
         significantChangeTreshold = 50
     ): number {
         let totalDiff = 0
+        let totalBrightness = 0
         const startX = Math.floor(x * cellWidth)
         const startY = Math.floor(y * cellHeight)
         const endX = Math.min(startX + cellWidth, currentFrame.width)
@@ -104,14 +105,20 @@ export class MotionDetectionService {
                 ) / 3
                 
                 totalDiff += Math.abs(currentBrightness - previousBrightness)
+                totalBrightness += currentBrightness
             }
         }
 
         // Bereken het percentage van pixels dat significant is veranderd
         const significantChanges = totalDiff / significantChangeTreshold
-        // console.log("significantChanges: ",significantChanges)
         // Normaliseer naar een waarde tussen 0 en 1, waarbij 1 overeenkomt met alle pixels significant veranderd
-        const normalizedValue = significantChanges / pixelCount
+        let normalizedValue = significantChanges / pixelCount
+        
+        // Als onlyMotionDetection false is, neem de helderheid mee
+        if (!this.optionsService.options.onlyMotionDetection) {
+            const averageBrightness = totalBrightness / (pixelCount * 255) // Normaliseer naar 0-1
+            normalizedValue = (normalizedValue + averageBrightness) / 2 // Gemiddelde van beweging en helderheid
+        }
         
         // Knip af op 1
         return Math.min(normalizedValue, 1)
@@ -123,7 +130,7 @@ export class MotionDetectionService {
         // If usePoseStream is true, use pose detection results as input
         if (this.optionsService.options.usePoseStream && poseDetection) {
             // Get the pose detection canvas
-            const poseCanvas = poseDetection.getCanvas()
+            const poseCanvas = poseDetection.poseCanvasBW
             if (!poseCanvas) return
 
             // Create a temporary canvas to draw the pose detection results

@@ -3,7 +3,7 @@ import { OptionsService } from './options-service'
 
 export class PoseDetectionModel {
     private pose: Pose
-    private canvas: HTMLCanvasElement
+    private _poseCanvas: HTMLCanvasElement
     private context: CanvasRenderingContext2D
     private videoElement: HTMLVideoElement
     private optionsService: OptionsService
@@ -15,8 +15,8 @@ export class PoseDetectionModel {
     constructor(videoElement: HTMLVideoElement, optionsService: OptionsService) {
         this.videoElement = videoElement
         this.optionsService = optionsService
-        this.canvas = document.createElement('canvas')
-        this.context = this.canvas.getContext('2d')!
+        this._poseCanvas = document.createElement('canvas')
+        this.context = this._poseCanvas.getContext('2d')!
         
         this.pose = new Pose({
             locateFile: (file) => {
@@ -53,8 +53,8 @@ export class PoseDetectionModel {
 
             // Bereken de huidige schouderafstand
             const currentShoulderDistance = Math.sqrt(
-                Math.pow((results.poseLandmarks[12].x - results.poseLandmarks[11].x) * this.canvas.width, 2) +
-                Math.pow((results.poseLandmarks[12].y - results.poseLandmarks[11].y) * this.canvas.height, 2)
+                Math.pow((results.poseLandmarks[12].x - results.poseLandmarks[11].x) * this._poseCanvas.width, 2) +
+                Math.pow((results.poseLandmarks[12].y - results.poseLandmarks[11].y) * this._poseCanvas.height, 2)
             )
 
             // Update de maximale schouderafstand als de huidige groter is
@@ -75,11 +75,11 @@ export class PoseDetectionModel {
         if (!results.poseLandmarks) return
 
         // Update canvas size to match video
-        this.canvas.width = this.videoElement.videoWidth
-        this.canvas.height = this.videoElement.videoHeight
+        this._poseCanvas.width = this.videoElement.videoWidth
+        this._poseCanvas.height = this.videoElement.videoHeight
 
         // Clear canvas
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height)
+        this.context.clearRect(0, 0, this._poseCanvas.width, this._poseCanvas.height)
 
         // If usePoseStream is true, draw the pose detection visualization
         if (this.optionsService.options.usePoseStream || this.optionsService.options.showPose) {
@@ -102,10 +102,10 @@ export class PoseDetectionModel {
             if (leftShoulder && rightShoulder && leftHip && rightHip) {
                 this.context.fillStyle = '#00FF00'
                 this.context.beginPath()
-                this.context.moveTo(leftShoulder.x * this.canvas.width, leftShoulder.y * this.canvas.height)
-                this.context.lineTo(rightShoulder.x * this.canvas.width, rightShoulder.y * this.canvas.height)
-                this.context.lineTo(rightHip.x * this.canvas.width, rightHip.y * this.canvas.height)
-                this.context.lineTo(leftHip.x * this.canvas.width, leftHip.y * this.canvas.height)
+                this.context.moveTo(leftShoulder.x * this._poseCanvas.width, leftShoulder.y * this._poseCanvas.height)
+                this.context.lineTo(rightShoulder.x * this._poseCanvas.width, rightShoulder.y * this._poseCanvas.height)
+                this.context.lineTo(rightHip.x * this._poseCanvas.width, rightHip.y * this._poseCanvas.height)
+                this.context.lineTo(leftHip.x * this._poseCanvas.width, leftHip.y * this._poseCanvas.height)
                 this.context.closePath()
                 this.context.fill()
             }
@@ -117,8 +117,8 @@ export class PoseDetectionModel {
                 
                 if (startPoint && endPoint) {
                     this.context.beginPath()
-                    this.context.moveTo(startPoint.x * this.canvas.width, startPoint.y * this.canvas.height)
-                    this.context.lineTo(endPoint.x * this.canvas.width, endPoint.y * this.canvas.height)
+                    this.context.moveTo(startPoint.x * this._poseCanvas.width, startPoint.y * this._poseCanvas.height)
+                    this.context.lineTo(endPoint.x * this._poseCanvas.width, endPoint.y * this._poseCanvas.height)
                     this.context.stroke()
                 }
             })
@@ -140,16 +140,16 @@ export class PoseDetectionModel {
                     
                     // Teken lijn van pols naar middelpunt
                     this.context.beginPath()
-                    this.context.moveTo(wristPoint.x * this.canvas.width, wristPoint.y * this.canvas.height)
-                    this.context.lineTo(centerX * this.canvas.width, centerY * this.canvas.height)
+                    this.context.moveTo(wristPoint.x * this._poseCanvas.width, wristPoint.y * this._poseCanvas.height)
+                    this.context.lineTo(centerX * this._poseCanvas.width, centerY * this._poseCanvas.height)
                     this.context.stroke()
 
                     // Teken rode stip op het middelpunt
                     this.context.fillStyle = '#FF0000'
                     this.context.beginPath()
                     this.context.arc(
-                        centerX * this.canvas.width,
-                        centerY * this.canvas.height,
+                        centerX * this._poseCanvas.width,
+                        centerY * this._poseCanvas.height,
                         this.optionsService.options.poseLineThickness/2,
                         0,
                         2 * Math.PI
@@ -166,8 +166,8 @@ export class PoseDetectionModel {
                 if (landmark && index > 10 && (index < 17 || index > 22)) {
                     this.context.beginPath()
                     this.context.arc(
-                        landmark.x * this.canvas.width,
-                        landmark.y * this.canvas.height,
+                        landmark.x * this._poseCanvas.width,
+                        landmark.y * this._poseCanvas.height,
                         dotRadius,
                         0,
                         2 * Math.PI
@@ -182,10 +182,10 @@ export class PoseDetectionModel {
                 let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
                 
                 for (const landmark of results.faceLandmarks) {
-                    minX = Math.min(minX, landmark.x * this.canvas.width)
-                    minY = Math.min(minY, landmark.y * this.canvas.height)
-                    maxX = Math.max(maxX, landmark.x * this.canvas.width)
-                    maxY = Math.max(maxY, landmark.y * this.canvas.height)
+                    minX = Math.min(minX, landmark.x * this._poseCanvas.width)
+                    minY = Math.min(minY, landmark.y * this._poseCanvas.height)
+                    maxX = Math.max(maxX, landmark.x * this._poseCanvas.width)
+                    maxY = Math.max(maxY, landmark.y * this._poseCanvas.height)
                 }
 
                 // Update z-waarde cache en bereken gemiddelde
@@ -194,8 +194,8 @@ export class PoseDetectionModel {
 
                 // Bereken de basis grootte op basis van de huidige schouderafstand
                 const currentShoulderDistance = Math.sqrt(
-                    Math.pow((results.poseLandmarks[12].x - results.poseLandmarks[11].x) * this.canvas.width, 2) +
-                    Math.pow((results.poseLandmarks[12].y - results.poseLandmarks[11].y) * this.canvas.height, 2)
+                    Math.pow((results.poseLandmarks[12].x - results.poseLandmarks[11].x) * this._poseCanvas.width, 2) +
+                    Math.pow((results.poseLandmarks[12].y - results.poseLandmarks[11].y) * this._poseCanvas.height, 2)
                 )
                 
                 // Gebruik de huidige schouderafstand als basis, maar schaal direct met de z-waarde
@@ -230,8 +230,8 @@ export class PoseDetectionModel {
                     
                     // Zelfde logica voor de fallback methode
                     const currentShoulderDistance = Math.sqrt(
-                        Math.pow((results.poseLandmarks[12].x - results.poseLandmarks[11].x) * this.canvas.width, 2) +
-                        Math.pow((results.poseLandmarks[12].y - results.poseLandmarks[11].y) * this.canvas.height, 2)
+                        Math.pow((results.poseLandmarks[12].x - results.poseLandmarks[11].x) * this._poseCanvas.width, 2) +
+                        Math.pow((results.poseLandmarks[12].y - results.poseLandmarks[11].y) * this._poseCanvas.height, 2)
                     )
                     
                     const zFactor = Math.abs(averageZ)
@@ -241,8 +241,8 @@ export class PoseDetectionModel {
                     this.context.fillStyle = '#00FF00'
                     this.context.beginPath()
                     this.context.arc(
-                        nose.x * this.canvas.width,
-                        nose.y * this.canvas.height,
+                        nose.x * this._poseCanvas.width,
+                        nose.y * this._poseCanvas.height,
                         headSize,
                         0,
                         2 * Math.PI
@@ -253,12 +253,12 @@ export class PoseDetectionModel {
 
             // Create black and white version
             const bwCanvas = document.createElement('canvas')
-            bwCanvas.width = this.canvas.width
-            bwCanvas.height = this.canvas.height
+            bwCanvas.width = this._poseCanvas.width
+            bwCanvas.height = this._poseCanvas.height
             const bwContext = bwCanvas.getContext('2d')!
             
             // Draw the pose in black and white
-            bwContext.drawImage(this.canvas, 0, 0)
+            bwContext.drawImage(this._poseCanvas, 0, 0)
             const imageData = bwContext.getImageData(0, 0, bwCanvas.width, bwCanvas.height)
             const data = imageData.data
 
@@ -275,8 +275,7 @@ export class PoseDetectionModel {
             bwContext.putImageData(imageData, 0, 0)
             this._poseCanvasBW = bwCanvas
 
-            // Maak een temp canvas en teken de zwart-witte canvas op deze canvas met een witte achtergrond
-            
+            // Maak een temp canvas voor het event met witte achtergrond
             let tempCanvas = document.body.querySelector('#tempCanvas') as HTMLCanvasElement
             if (!tempCanvas) {
                 tempCanvas = document.createElement('canvas')
@@ -284,8 +283,8 @@ export class PoseDetectionModel {
             }
 
             tempCanvas.id = 'tempCanvas'
-            tempCanvas.width = this.canvas.width
-            tempCanvas.height = this.canvas.height
+            tempCanvas.width = this._poseCanvas.width
+            tempCanvas.height = this._poseCanvas.height
             tempCanvas.style.position = 'absolute'
             tempCanvas.style.top = '0'
             tempCanvas.style.left = '0'
@@ -294,12 +293,12 @@ export class PoseDetectionModel {
             tempCanvas.style.border = '1px solid red'
             const tempContext = tempCanvas.getContext('2d')!
 
+            tempContext.clearRect(0, 0, tempCanvas.width, tempCanvas.height)
             tempContext.fillStyle = 'white'
             tempContext.filter = 'invert(1)'
             tempContext.fillRect(0, 0, tempCanvas.width, tempCanvas.height)
             tempContext.drawImage(bwCanvas, 0, 0)
-            // Invert colors
-
+            // tempContext.filter = 'invert(0)'
 
             // Alleen emitten als het canvas beschikbaar is
             if (tempCanvas) {
@@ -318,7 +317,7 @@ export class PoseDetectionModel {
     }
 
     get poseCanvas(): HTMLCanvasElement {
-        return this.canvas
+        return this._poseCanvas
     }
 
     get poseCanvasBW(): HTMLCanvasElement | null {
@@ -330,6 +329,6 @@ export class PoseDetectionModel {
     }
     
     getCanvas(): HTMLCanvasElement {
-        return this.canvas
+        return this._poseCanvasBW
     }
 } 
