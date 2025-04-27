@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 
 .env.staging
+vite.config.ts
+*.pem
