@@ -1,5 +1,5 @@
-import { PoseDetectionModel } from './pose-detection'
-import { OptionsService } from './options-service'
+import { PoseDetectionModel } from "./pose-detection"
+import { OptionsService } from "./options-service"
 
 export class WebcamModel {
     private stream: MediaStream | null = null
@@ -10,23 +10,59 @@ export class WebcamModel {
     private animationFrameId: number | null = null
     private optionsService: OptionsService
     private isPoseDetectionInitialized: boolean = false
+    private availableDevices: MediaDeviceInfo[] = []
+    private selectedDeviceId: string | null = null
 
     constructor(optionsService: OptionsService) {
         this.optionsService = optionsService
         this.videoElement = document.createElement("video")
         this.canvas = document.createElement("canvas")
         this.context = this.canvas.getContext("2d")
+        this.initializeDeviceSelection()
+    }
+
+    private async initializeDeviceSelection() {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices()
+            this.availableDevices = devices.filter(device => device.kind === "videoinput")
+            
+            // Update de camera select dropdown
+            const cameraSelect = document.getElementById("cameraSelect") as HTMLSelectElement
+            if (cameraSelect) {
+                cameraSelect.innerHTML = this.availableDevices.map(device => 
+                    `<option value="${device.deviceId}">${device.label || `Camera ${device.deviceId}`}</option>`
+                ).join("")
+                
+                // Selecteer de eerste camera als default
+                if (this.availableDevices.length > 0) {
+                    this.selectedDeviceId = this.availableDevices[0].deviceId
+                    cameraSelect.value = this.selectedDeviceId
+                }
+
+                // Voeg event listener toe voor camera wisseling
+                cameraSelect.addEventListener("change", async (e) => {
+                    const target = e.target as HTMLSelectElement
+                    this.selectedDeviceId = target.value
+                    await this.restart()
+                })
+            }
+        } catch (error) {
+            console.error("Error initializing device selection:", error)
+        }
     }
 
     async start(): Promise<void> {
         try {
-            this.stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { 
+            const constraints: MediaStreamConstraints = {
+                video: {
                     width: { ideal: 1920 },
                     height: { ideal: 1080 },
-                    facingMode: "user"
-                } 
-            })
+                    deviceId: this.selectedDeviceId ? { exact: this.selectedDeviceId } : undefined
+                }
+            }
+
+            this.stream = await navigator.mediaDevices.getUserMedia(constraints)
+            
             if (this.videoElement) {
                 this.videoElement.srcObject = this.stream
                 await this.videoElement.play()
@@ -39,6 +75,11 @@ export class WebcamModel {
             console.error("Error accessing webcam:", error)
             throw error
         }
+    }
+
+    private async restart(): Promise<void> {
+        this.stop()
+        await this.start()
     }
 
     private startPoseDetection() {

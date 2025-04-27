@@ -30,7 +30,7 @@ export interface Options {
     blockSize: number
     threshold: number
     poseLineWidth: number
-    visualizationStyle: 'grid' | 'heatmap' | 'contour'
+    visualizationStyle: "grid" | "heatmap" | "contour"
     onlyMotionDetection: boolean
 }
 
@@ -45,11 +45,11 @@ const defaultOptions: Options = {
     gridSize: { x: 1, y: 1 },
     bufferSize: 0,
     significantChangeThreshold: 0,
-    selectedStyle: 'Zwarte blokken',
+    selectedStyle: "Zwarte blokken",
     blockSize: 8,
     threshold: 30,
     poseLineWidth: 2,
-    visualizationStyle: 'grid',
+    visualizationStyle: "grid",
     onlyMotionDetection: true
 }
 
@@ -395,7 +395,7 @@ export class OptionsService {
         this.saveOptions()
     }
 
-    setVisualizationStyle(value: 'grid' | 'heatmap' | 'contour'): void {
+    setVisualizationStyle(value: "grid" | "heatmap" | "contour"): void {
         this._options.visualizationStyle = value
         this.saveOptions()
     }
@@ -412,8 +412,8 @@ export class OptionsService {
 
     setGridSize(x: number, y: number): void {
         // Zorg ervoor dat x en y minimaal 1 zijn
-        x = Math.max(1, x);
-        y = Math.max(1, y);
+        x = Math.max(1, x)
+        y = Math.max(1, y)
         this._options.gridSize = { x, y }
         this.saveOptions()
         if (this._motionDetection) {
@@ -449,9 +449,9 @@ export class OptionsService {
         this._videoElement = videoElement
 
         // Voeg pose-active class standaard toe aan de sidebar
-        const sidebar = document.querySelector('.sidebar') as HTMLElement
+        const sidebar = document.querySelector(".sidebar") as HTMLElement
         if (sidebar) {
-            sidebar.classList.add('pose-active')
+            sidebar.classList.add("pose-active")
         }
 
         const gridXInput = document.querySelector("#gridX") as HTMLInputElement
@@ -586,10 +586,10 @@ export class OptionsService {
             const poseUpdateHandler = () => {
                 showPoseCheckbox.disabled = false
                 showPoseBWCheckbox.disabled = false
-                document.removeEventListener('poseDetectionInitialized', poseUpdateHandler)
+                document.removeEventListener("poseDetectionInitialized", poseUpdateHandler)
             }
 
-            document.addEventListener('poseDetectionInitialized', poseUpdateHandler)
+            document.addEventListener("poseDetectionInitialized", poseUpdateHandler)
 
             usePoseStreamCheckbox.addEventListener("change", () => {
                 this.setUsePoseStream(usePoseStreamCheckbox.checked)

@@ -43,28 +43,70 @@ export class ImageLogicService {
         this.neighbors = neighbors
     }
 
+    private getValueForVariable(varName: string): number | undefined {
+        switch(varName) {
+            case "c": return this.currentValue
+            case "t": return this.neighbors.t
+            case "b": return this.neighbors.b
+            case "l": return this.neighbors.l
+            case "r": return this.neighbors.r
+            case "tl": return this.neighbors.tl
+            case "tr": return this.neighbors.tr
+            case "bl": return this.neighbors.bl
+            case "br": return this.neighbors.br
+            default: return undefined
+        }
+    }
+
+    private parseValue(value: string): number | undefined {
+        if (["c", "t", "b", "l", "r", "tl", "tr", "bl", "br"].includes(value)) {
+            return this.getValueForVariable(value)
+        }
+        const num = parseFloat(value)
+        return isNaN(num) ? undefined : num
+    }
+
+    private evaluateExpression(expression: string): boolean {
+        expression = expression.replace(/\s+/g, "")
+
+        if (expression.includes("&&")) {
+            return expression.split("&&").every(part => this.evaluateExpression(part))
+        }
+        if (expression.includes("||")) {
+            return expression.split("||").some(part => this.evaluateExpression(part))
+        }
+
+        const operators = ["==", "!=", ">=", "<=", ">", "<"]
+        for (const op of operators) {
+            if (expression.includes(op)) {
+                const [left, right] = expression.split(op)
+                const leftValue = this.parseValue(left)
+                const rightValue = this.parseValue(right)
+                
+                if (leftValue === undefined || rightValue === undefined) {
+                    continue
+                }
+
+                switch(op) {
+                    case "==": return leftValue === rightValue
+                    case "!=": return leftValue !== rightValue
+                    case ">=": return leftValue >= rightValue
+                    case "<=": return leftValue <= rightValue
+                    case ">": return leftValue > rightValue
+                    case "<": return leftValue < rightValue
+                }
+            }
+        }
+
+        return false
+    }
+
     public evaluateCondition(condition?: string): boolean {
         if (!condition) return true
-
-        /* eslint-disable @typescript-eslint/no-unused-vars, no-eval */
-        // @ts-expect-error - Variables are used in eval for dynamic condition evaluation
-        const { c, t, b, l, r, tl, tr, bl, br } = {
-            c: this.currentValue,
-            t: this.neighbors.t,
-            b: this.neighbors.b,
-            l: this.neighbors.l,
-            r: this.neighbors.r,
-            tl: this.neighbors.tl,
-            tr: this.neighbors.tr,
-            bl: this.neighbors.bl,
-            br: this.neighbors.br
-        }
-        /* eslint-enable @typescript-eslint/no-unused-vars, no-eval */
-
+        
         try {
-            return eval(condition)
+            return this.evaluateExpression(condition)
         } catch (error) {
-            console.error("Fout bij evalueren van conditie:", error)
             return false
         }
     }
@@ -79,13 +121,10 @@ export class ImageLogicService {
             return (value >= v.min && value <= v.max)
         })
         
-        // console.log(`c: ${this.currentValue} l: ${this.neighbors.l} r: ${this.neighbors.r} |`, style.values[3].if,  matchingValues)
-
         if (matchingValues.length === 0) {
-            return style.values[0].val // Fallback naar eerste waarde
+            return style.values[0].val
         }
 
-        // Als er meerdere matches zijn, kies degene met de kleinste range
         return matchingValues[matchingValues.length-1].val
     }
 } 

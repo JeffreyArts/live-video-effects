@@ -2,7 +2,7 @@ import { Pose } from "@mediapipe/pose"
 import { OptionsService } from "./options-service"
 
 export class PoseDetectionModel {
-    private pose: Pose
+    private pose: Pose | null = null
     private _poseCanvas: HTMLCanvasElement
     private context: CanvasRenderingContext2D
     private videoElement: HTMLVideoElement
@@ -28,22 +28,32 @@ export class PoseDetectionModel {
         document.body.appendChild(this._webcamCanvas)
         this.context = this._poseCanvas.getContext("2d")!
         
-        this.pose = new Pose({
-            locateFile: (file) => {
-                return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
-            }
-        })
+        this.initializePose()
+    }
 
-        this.pose.setOptions({
-            modelComplexity: 2,
-            smoothLandmarks: true,
-            enableSegmentation: true,
-            smoothSegmentation: true,
-            minDetectionConfidence: 0.5,
-            minTrackingConfidence: 0.5
-        })
+    private async initializePose() {
+        try {
+            // Wacht op de MediaPipe Pose module om te laden
+            const poseModule = await import("@mediapipe/pose")
+            this.pose = new poseModule.Pose({
+                locateFile: (file) => {
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+                }
+            })
 
-        this.pose.onResults(this.onResults.bind(this))
+            this.pose.setOptions({
+                modelComplexity: 2,
+                smoothLandmarks: true,
+                enableSegmentation: true,
+                smoothSegmentation: true,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            })
+
+            this.pose.onResults(this.onResults.bind(this))
+        } catch (error) {
+            console.error("Error initializing MediaPipe Pose:", error)
+        }
     }
 
     private getAverageZValue(): number {
@@ -311,7 +321,9 @@ export class PoseDetectionModel {
     }
 
     async processFrame() {
-        await this.pose.send({ image: this.videoElement })
+        if (this.pose) {
+            await this.pose.send({ image: this.videoElement })
+        }
     }
 
     get poseCanvas(): HTMLCanvasElement {
