@@ -530,12 +530,32 @@ export class OptionsService {
             const value = parseInt(bufferInput.value)
             bufferValueInput.value = value.toString()
             this.setBufferSize(value)
+            
+            // Disable onlyMotionDetection checkbox als buffer 1 is
+            const onlyMotionDetectionCheckbox = document.getElementById("onlyMotionDetection") as HTMLInputElement
+            if (onlyMotionDetectionCheckbox) {
+                onlyMotionDetectionCheckbox.disabled = value === 1
+                if (value === 1) {
+                    onlyMotionDetectionCheckbox.checked = false
+                    this.setOnlyMotionDetection(false)
+                }
+            }
         })
 
         bufferValueInput.addEventListener("input", () => {
             const value = parseInt(bufferValueInput.value)
             bufferInput.value = value.toString()
             this.setBufferSize(value)
+            
+            // Disable onlyMotionDetection checkbox als buffer 1 is
+            const onlyMotionDetectionCheckbox = document.getElementById("onlyMotionDetection") as HTMLInputElement
+            if (onlyMotionDetectionCheckbox) {
+                onlyMotionDetectionCheckbox.disabled = value === 1
+                if (value === 1) {
+                    onlyMotionDetectionCheckbox.checked = false
+                    this.setOnlyMotionDetection(false)
+                }
+            }
         })
 
         showVideoInput.addEventListener("change", () => {
