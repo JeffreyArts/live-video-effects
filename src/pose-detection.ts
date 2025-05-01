@@ -1,8 +1,15 @@
-import { Pose } from "@mediapipe/pose"
 import { OptionsService } from "./options-service"
 
+declare global {
+    interface Window {
+        Pose: {
+            new (config: { locateFile: (file: string) => string }): any
+        }
+    }
+}
+
 export class PoseDetectionModel {
-    private pose: Pose | null = null
+    private pose: any | null = null
     private _poseCanvas: HTMLCanvasElement
     private context: CanvasRenderingContext2D
     private videoElement: HTMLVideoElement
@@ -34,8 +41,14 @@ export class PoseDetectionModel {
     private async initializePose() {
         try {
             // Wacht op de MediaPipe Pose module om te laden
-            const poseModule = await import("@mediapipe/pose")
-            this.pose = new poseModule.Pose({
+            if (!window.Pose) {
+                const script = document.createElement("script")
+                script.src = "https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"
+                document.head.appendChild(script)
+                await new Promise(resolve => script.onload = resolve)
+            }
+            
+            this.pose = new window.Pose({
                 locateFile: (file) => {
                     return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
                 }
