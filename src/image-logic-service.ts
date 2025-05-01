@@ -126,7 +126,7 @@ export class ImageLogicService {
         })
 
         if (matchingValues.length > 0) {
-            return matchingValues[0].val.toString()
+            return matchingValues[matchingValues.length - 1].val.toString()
         }
 
         return videoEffect.values[0].val.toString()
