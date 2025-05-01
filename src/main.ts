@@ -14,7 +14,6 @@ const imageLogicService = ImageLogicService.getInstance()
 
 document.addEventListener("DOMContentLoaded", async () => {
     const options = optionsService.options
-    const styles = optionsService.styles
     
     try {
         // Voeg het wrench icon toe aan de toggle button
@@ -151,9 +150,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Initialiseer de event listeners voor de opties
         optionsService.initializeEventListeners(motionDetection, videoElement || undefined)
 
-        function loadImages() {
+        async function loadImages() {
             if (optionsService.currentStyle?.type === "image") {
-                optionsService.currentStyle.values.forEach((v: StyleValue) => {
+                const promises = optionsService.currentStyle.values.map((v: StyleValue) => {
                     return new Promise<void>((resolve, reject) => {
                         const imagePath = v.val.toString()
                         const img = new Image()
@@ -169,11 +168,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                         img.src = imagePath
                     })
                 })
+                await Promise.all(promises)
             }
         }
         const styleSelect = document.querySelector("#styleSelect") as HTMLSelectElement
-        styleSelect.addEventListener("change", () => {
-            loadImages()
+        styleSelect.addEventListener("change", async () => {
+            await loadImages()
         })
 
         // Animation loop
@@ -219,7 +219,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                         
                         for (let x = 0; x < motionGrid[y].length; x++) {
                             let motion = motionGrid[y][x]
-
+                            
+                            // console.log(optionsService.currentStyle)
                             if (optionsService.currentStyle.valueRange) {
                                 const step = 1 / (optionsService.currentStyle.valueRange - 1)
                                 motion = Math.round(motion / step) * step
@@ -321,7 +322,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.error("Kon de webcam niet starten:", error)
     }
     function processImageCell(value: number, x: number, y: number, grid: number[][]): string | number {
-        const style = styles.find((s: Style) => s.name === optionsService.options.selectedStyle)
+        const style = optionsService.styles.find((s: Style) => s.name === optionsService.options.selectedStyle)
         if (style?.type === "image") {
             const neighbors = {
                 t: y > 0 ? grid[y-1][x] : undefined,
@@ -344,8 +345,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Check if we're in dev mode
-    if (window.location.search.includes('?dev')) {
-        document.body.classList.add('dev');
+    if (window.location.search.includes("?dev")) {
+        document.body.classList.add("dev")
     }
 })
 
