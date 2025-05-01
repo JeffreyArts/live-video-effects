@@ -1,5 +1,5 @@
 {
-    "name": "Regenboog blokken",
+    "name": "Regenboog stippen",
     "type": "dot",
     "defaultValue": "hsl(0, 100%, 50%)",
     "values": [
