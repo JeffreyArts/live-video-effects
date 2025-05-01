@@ -1,20 +1,20 @@
 import { MotionDetectionService } from "./motion-detection"
 
-export type StyleType = "rectangle" | "dot" | "image" | "text"
+export type VideoEffectType = "rectangle" | "dot" | "image" | "text"
 
-export interface StyleValue {
+export interface VideoEffectValue {
     min?: number;
     max?: number;
     val: string | number;
     if?: string;
 }
 
-export interface Style {
+export interface VideoEffect {
     name: string;
     defaultValue?: string
     valueRange?: number
-    type: StyleType;
-    values: StyleValue[];
+    type: VideoEffectType;
+    values: VideoEffectValue[];
 }
 
 export interface Options {
@@ -26,9 +26,9 @@ export interface Options {
     gridSize: { x: number; y: number }
     bufferSize: number
     significantChangeThreshold: number
-    selectedStyle: string
+    selectedVideoEffect: string
     threshold: number
-    visualizationStyle: "grid" | "heatmap" | "contour"
+    visualizationType: "grid" | "heatmap" | "contour"
     onlyMotionDetection: boolean
 }
 
@@ -43,35 +43,36 @@ const defaultOptions: Options = {
     gridSize: { x: 40, y: 40 },
     bufferSize: 1,
     significantChangeThreshold: 32,
-    selectedStyle: "Zwarte blokken",
+    selectedVideoEffect: "Zwarte blokken",
     threshold: 30,
-    visualizationStyle: "grid",
+    visualizationType: "grid",
     onlyMotionDetection: false
 }
 
-// Functie om styles automatisch in te laden
-async function loadStyles(): Promise<Style[]> {
-    const styles: Style[] = []
+// Functie om video effects automatisch in te laden
+async function loadVideoEffects(): Promise<VideoEffect[]> {
+    const videoEffects: VideoEffect[] = []
     try {
-        // Importeer alle JSON bestanden uit de styles map
-        const styleModules = import.meta.glob("./styles/*.json")
+        // Importeer alle JSON bestanden uit de video-effects map
+        const videoEffectModules = import.meta.glob("./video-effects/*.json")
         
-        for (const path in styleModules) {
-            const module = await styleModules[path]() as { default: Style }
-            styles.push(module.default)
+        for (const path in videoEffectModules) {
+            const module = await videoEffectModules[path]() as { default: VideoEffect }
+            videoEffects.push(module.default)
         }
     } catch (error) {
-        console.error("Kon styles niet laden:", error)
+        console.error("Kon video effects niet laden:", error)
     }
-    return styles
+    return videoEffects
 }
 
 export class OptionsService {
     private _options: Options
-    private _styles: Style[] = []
-    private _currentStyle: Style
+    private _videoEffects: VideoEffect[] = []
+    private _currentVideoEffect: VideoEffect
     private _motionDetection?: MotionDetectionService
     private _videoElement?: HTMLVideoElement
+    private _videoEffectsLoaded: Promise<void>
 
     constructor() {
         // Bereken de grid grootte op basis van de schermresolutie
@@ -80,15 +81,19 @@ export class OptionsService {
         defaultOptions.gridSize = { x: gridSize, y: gridSize }
 
         this._options = this.loadOptions()
-        this._currentStyle = this.getStyleByName(this._options.selectedStyle) || { name: "Default", type: "rectangle", values: [] }
+        this._currentVideoEffect = { name: "Default", type: "rectangle", values: [] }
         
-        // Laad styles asynchroon
-        this.loadStylesAsync()
+        // Laad video effects asynchroon
+        this._videoEffectsLoaded = this.loadVideoEffectsAsync()
     }
 
-    private async loadStylesAsync() {
-        this._styles = await loadStyles()
-        this._currentStyle = this.getStyleByName(this._options.selectedStyle) || this._styles[0]
+    private async loadVideoEffectsAsync() {
+        this._videoEffects = await loadVideoEffects()
+        this._currentVideoEffect = this.getVideoEffectByName(this._options.selectedVideoEffect) || this._videoEffects[0]
+    }
+
+    public async waitForVideoEffects(): Promise<void> {
+        await this._videoEffectsLoaded
     }
 
     private loadOptions(): Options {
@@ -121,17 +126,17 @@ export class OptionsService {
         return this._options
     }
 
-    get styles(): Style[] {
-        return this._styles
+    get videoEffects(): VideoEffect[] {
+        return this._videoEffects
     }
 
-    get currentStyle(): Style {
-        return this._currentStyle
+    get currentVideoEffect(): VideoEffect {
+        return this._currentVideoEffect
     }
 
-    setSelectedStyle(value: string): void {
-        this._options.selectedStyle = value
-        this._currentStyle = this.getStyleByName(value) || this._styles[0]
+    setSelectedVideoEffect(value: string): void {
+        this._options.selectedVideoEffect = value
+        this._currentVideoEffect = this.getVideoEffectByName(value) || this._videoEffects[0]
         this.saveOptions()
         
         if (this._motionDetection) {
@@ -192,8 +197,8 @@ export class OptionsService {
         this.saveOptions()
     }
 
-    setVisualizationStyle(value: "grid" | "heatmap" | "contour"): void {
-        this._options.visualizationStyle = value
+    setVisualizationType(value: "grid" | "heatmap" | "contour"): void {
+        this._options.visualizationType = value
         this.saveOptions()
     }
 
@@ -251,18 +256,18 @@ export class OptionsService {
         const bufferInput = document.querySelector("#buffer") as HTMLInputElement
         const showVideoInput = document.querySelector("#showVideo") as HTMLInputElement
         const thresholdInput = document.querySelector("#threshold") as HTMLInputElement
-        const styleSelect = document.querySelector("#styleSelect") as HTMLSelectElement
+        const videoEffectSelect = document.querySelector("#videoEffectSelect") as HTMLSelectElement
         const toggleButton = document.querySelector(".toggle-button") as HTMLButtonElement
 
-        // Vul de style select met opties
-        styleSelect.innerHTML = this._styles.map(style => `
-            <option value="${style.name}">
-                ${style.name}
+        // Vul de video effect select met opties
+        videoEffectSelect.innerHTML = this._videoEffects.map(effect => `
+            <option value="${effect.name}">
+                ${effect.name}
             </option>
         `).join("")
 
-        // Update de geselecteerde stijl in de dropdown
-        styleSelect.value = this.options.selectedStyle
+        // Update de geselecteerde video effect in de dropdown
+        videoEffectSelect.value = this.options.selectedVideoEffect
 
         // Update de initiële waarden
         const options = this.options
@@ -337,9 +342,9 @@ export class OptionsService {
             this.setSignificantChangeThreshold(value)
         })
 
-        styleSelect.addEventListener("change", () => {
-            const newStyle = styleSelect.value
-            this.setSelectedStyle(newStyle)
+        videoEffectSelect.addEventListener("change", () => {
+            const newEffect = videoEffectSelect.value
+            this.setSelectedVideoEffect(newEffect)
             if (this._motionDetection) {
                 this.applyOptions(this._motionDetection, this._videoElement)
             }
@@ -421,7 +426,7 @@ export class OptionsService {
         this.applyOptions(motionDetection, videoElement)
     }
 
-    getStyleByName(name: string): Style | undefined {
-        return this._styles.find(style => style.name === name)
+    getVideoEffectByName(name: string): VideoEffect | undefined {
+        return this._videoEffects.find(effect => effect.name === name)
     }
 } 

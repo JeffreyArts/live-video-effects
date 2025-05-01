@@ -1,3 +1,5 @@
+import { VideoEffect } from "./options-service"
+
 export interface ImageValue {
     min: number;
     max: number;
@@ -111,20 +113,22 @@ export class ImageLogicService {
         }
     }
 
-    public getImageForValue(style: ImageStyle): string {
-        const value = this.currentValue
+    public getImageForValue(videoEffect: VideoEffect): string {
+        if (videoEffect.type !== "image") {
+            return videoEffect.values[0].val.toString()
+        }
 
-        const matchingValues = style.values.filter(v => { 
+        const matchingValues = videoEffect.values.filter(v => {
             if (v.if) {
                 return this.evaluateCondition(v.if)
             }
-            return (value >= v.min && value <= v.max)
+            return v.min === v.max && v.min === this.currentValue
         })
-        
-        if (matchingValues.length === 0) {
-            return style.values[0].val
+
+        if (matchingValues.length > 0) {
+            return matchingValues[0].val.toString()
         }
 
-        return matchingValues[matchingValues.length-1].val
+        return videoEffect.values[0].val.toString()
     }
 } 

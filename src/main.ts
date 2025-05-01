@@ -1,8 +1,8 @@
 import "./vite-env.d.ts"
 import { WebcamModel } from "./webcam"
 import { MotionDetectionService } from "./motion-detection"
-import { OptionsService, Style, StyleValue } from "./options-service"
-import { ImageLogicService, ImageStyle } from "./image-logic-service"
+import { OptionsService, VideoEffect, VideoEffectValue } from "./options-service"
+import { ImageLogicService } from "./image-logic-service"
 import { iconsMap } from "jao-icons"
 
 
@@ -16,6 +16,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const options = optionsService.options
     
     try {
+        // Wacht tot de video effecten zijn geladen
+        await optionsService.waitForVideoEffects()
+
         // Voeg het wrench icon toe aan de toggle button
         const toggleButton = document.getElementById("toggleButton")
         if (toggleButton) {
@@ -151,33 +154,33 @@ document.addEventListener("DOMContentLoaded", async () => {
         optionsService.initializeEventListeners(motionDetection, videoElement || undefined)
 
         async function loadImages() {
-            if (optionsService.currentStyle?.type === "image") {
-                const promises = optionsService.currentStyle.values.map((v: StyleValue) => {
+            await optionsService.waitForVideoEffects()
+            if (optionsService.currentVideoEffect?.type === "image") {
+                const promises = optionsService.currentVideoEffect.values.map((v: VideoEffectValue) => {
                     return new Promise<void>((resolve, reject) => {
-                        const imagePath = v.val.toString()
                         const img = new Image()
                         img.onload = () => {
-                            console.log(`Afbeelding geladen: ${imagePath}`)
-                            cachedImages[imagePath] = img
+                            cachedImages[v.val.toString()] = img
                             resolve()
                         }
-                        img.onerror = (e) => {
-                            console.error(`Fout bij laden afbeelding ${imagePath}:`, e)
-                            reject(e)
+                        img.onerror = () => {
+                            console.error(`Kon afbeelding niet laden: ${v.val}`)
+                            reject()
                         }
-                        img.src = imagePath
+                        img.src = v.val.toString()
                     })
                 })
                 await Promise.all(promises)
             }
         }
-        const styleSelect = document.querySelector("#styleSelect") as HTMLSelectElement
-        styleSelect.addEventListener("change", async () => {
+        const videoEffectSelect = document.querySelector("#videoEffectSelect") as HTMLSelectElement
+        videoEffectSelect.addEventListener("change", async () => {
             await loadImages()
         })
 
         // Animation loop
         async function update() {
+            await optionsService.waitForVideoEffects()
             const sourceCanvas = optionsService.options.usePoseStream ? webcam.webcamCanvas : webcam.currentImage
             if (sourceCanvas && ctx) {
                 // Update canvas grootte om overeen te komen met video
@@ -213,16 +216,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                 if (poseCanvasBWData && options.showPoseBW) {
                     poseCtxBW.drawImage(poseCanvasBWData, 0, 0)
                 }
-                if (optionsService.currentStyle.type == "image") {
+                if (optionsService.currentVideoEffect.type == "image") {
                     for (let y = 0; y < motionGrid.length; y++) {
                         imageGrid[y] = []
                         
                         for (let x = 0; x < motionGrid[y].length; x++) {
                             let motion = motionGrid[y][x]
                             
-                            // console.log(optionsService.currentStyle)
-                            if (optionsService.currentStyle.valueRange) {
-                                const step = 1 / (optionsService.currentStyle.valueRange - 1)
+                            // console.log(optionsService.currentVideoEffect)
+                            if (optionsService.currentVideoEffect.valueRange) {
+                                const step = 1 / (optionsService.currentVideoEffect.valueRange - 1)
                                 motion = Math.round(motion / step) * step
                             }
                             imageGrid[y][x] = motion
@@ -235,43 +238,43 @@ document.addEventListener("DOMContentLoaded", async () => {
                     for (let x = 0; x < motionGrid[y].length; x++) {
                         let motion = motionGrid[y][x]
 
-                        if (optionsService.currentStyle.valueRange) {
-                            const step = 1 / (optionsService.currentStyle.valueRange - 1)
+                        if (optionsService.currentVideoEffect.valueRange) {
+                            const step = 1 / (optionsService.currentVideoEffect.valueRange - 1)
                             motion = Math.round(motion / step) * step
                         }
 
                         // Debug logging
                         if (isNaN(motion)) {
-                            console.warn(`Ongeldige motion waarde gevonden: ${motion}. Originele waarde: ${motionGrid[y][x]}, valueRange: ${optionsService.currentStyle.valueRange}`)
+                            console.warn(`Ongeldige motion waarde gevonden: ${motion}. Originele waarde: ${motionGrid[y][x]}, valueRange: ${optionsService.currentVideoEffect.valueRange}`)
                             motion = 0 // Reset naar 0 als fallback
                         }
 
-                        const value = optionsService.currentStyle.values.find((s: StyleValue) => {
+                        const value = optionsService.currentVideoEffect.values.find((s: VideoEffectValue) => {
                             // Als min en max gelijk zijn, dan is het een exacte match
                             if (s.min === s.max) {
                                 return motion === s.min
                             }
                             // Anders kijken we of de waarde binnen het bereik valt
                             return motion >= s.min! && motion <= s.max!
-                        })?.val || optionsService.currentStyle.values[0].val
+                        })?.val || optionsService.currentVideoEffect.values[0].val
 
                         if (typeof value === "undefined") {
                             console.warn(`Geen waarde gevonden voor motion: ${motion}. Gebruik fallback waarde.`)
-                            ctx.fillStyle = optionsService.currentStyle.defaultValue || "black"
+                            ctx.fillStyle = optionsService.currentVideoEffect.defaultValue || "black"
                         } else if (typeof value == "string") {
                             ctx.fillStyle = value
                         } else if (typeof value == "number") {
-                            ctx.fillStyle = optionsService.currentStyle.defaultValue || "black"
+                            ctx.fillStyle = optionsService.currentVideoEffect.defaultValue || "black"
                         }
 
-                        if (optionsService.currentStyle.type == "rectangle") {
+                        if (optionsService.currentVideoEffect.type == "rectangle") {
                             ctx.fillRect(
                                 x * cellWidth - .5,
                                 y * cellHeight - .5,
                                 cellWidth + .5,
                                 cellHeight + .5
                             )
-                        } else if (optionsService.currentStyle.type == "dot") {
+                        } else if (optionsService.currentVideoEffect.type == "dot") {
                             ctx.beginPath()
                             let scale = 1
 
@@ -287,7 +290,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 2 * Math.PI
                             )
                             ctx.fill()
-                        } else if (optionsService.currentStyle.type == "text") {
+                        } else if (optionsService.currentVideoEffect.type == "text") {
                             ctx.font = `${Math.min(cellWidth, cellHeight)}px Arial`
                             ctx.textAlign = "center"
                             ctx.textBaseline = "middle"
@@ -297,7 +300,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 x * cellWidth + cellWidth / 2,
                                 y * cellHeight + cellHeight / 2
                             )
-                        } else if (optionsService.currentStyle.type == "image") {
+                        } else if (optionsService.currentVideoEffect.type == "image") {
                             const imagePath = processImageCell(motion, x, y, imageGrid)
 
                             if (cachedImages[imagePath]) {
@@ -322,23 +325,24 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.error("Kon de webcam niet starten:", error)
     }
     function processImageCell(value: number, x: number, y: number, grid: number[][]): string | number {
-        const style = optionsService.styles.find((s: Style) => s.name === optionsService.options.selectedStyle)
-        if (style?.type === "image") {
+        const videoEffect = optionsService.videoEffects.find((s: VideoEffect) => s.name === optionsService.options.selectedVideoEffect)
+        if (videoEffect?.type === "image") {
             const neighbors = {
                 t: y > 0 ? grid[y-1][x] : undefined,
-                b: y < grid.length-1 ? grid[y+1][x] : undefined,
+                r: x < grid[y].length - 1 ? grid[y][x+1] : undefined,
+                b: y < grid.length - 1 ? grid[y+1][x] : undefined,
                 l: x > 0 ? grid[y][x-1] : undefined,
-                r: x < grid[0].length-1 ? grid[y][x+1] : undefined,
+                tr: y > 0 && x < grid[y].length - 1 ? grid[y-1][x+1] : undefined,
+                br: y < grid.length - 1 && x < grid[y].length - 1 ? grid[y+1][x+1] : undefined,
+                bl: y < grid.length - 1 && x > 0 ? grid[y+1][x-1] : undefined,
                 tl: y > 0 && x > 0 ? grid[y-1][x-1] : undefined,
-                tr: y > 0 && x < grid[0].length-1 ? grid[y-1][x+1] : undefined,
-                bl: y < grid.length-1 && x > 0 ? grid[y+1][x-1] : undefined,
-                br: y < grid.length-1 && x < grid[0].length-1 ? grid[y+1][x+1] : undefined
+                c: value
             }
-    
+
             imageLogicService.setCurrentValue(value)
             imageLogicService.setNeighbors(neighbors)
             
-            const res = imageLogicService.getImageForValue(style as ImageStyle)
+            const res = imageLogicService.getImageForValue(videoEffect)
             return res
         }
         return value
