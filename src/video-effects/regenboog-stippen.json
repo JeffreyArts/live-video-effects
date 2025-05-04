@@ -1,7 +1,6 @@
 {
     "name": "Regenboog stippen",
     "type": "dot",
-    "defaultValue": "hsl(0, 100%, 50%)",
     "values": [
         { "min": 0, "max": 0.0625, "val": "hsl(0, 100%, 50%)" },
         { "min": 0.0625, "max": 0.125, "val": "hsl(22.5, 100%, 50%)" },

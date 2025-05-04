@@ -1,11 +1,11 @@
 {
     "name": "Wit minimal",
     "type": "dot",
-    "defaultValue": "black",
+    "defaultColor": "black",
     "values": [
-        { "min": 0, "max": 0.25, "val": 0 },
-        { "min": 0.25, "max": 0.5, "val": 0.33 },
-        { "min": 0.5, "max": 0.75, "val": 0.666 },
-        { "min": 0.75, "max": 1, "val": 1 }
+        { "min": 0, "max": 0.25, "size": 0 },
+        { "min": 0.25, "max": 0.5, "size": 0.33},
+        { "min": 0.5, "max": 0.75, "size": 0.666 },
+        { "min": 0.75, "max": 1, "size": 1}
     ]
 } 

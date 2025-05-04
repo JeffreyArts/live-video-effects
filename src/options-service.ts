@@ -7,11 +7,12 @@ export interface VideoEffectValue {
     max?: number;
     val: string | number;
     if?: string;
+    size?: number;
 }
 
 export interface VideoEffect {
     name: string;
-    defaultValue?: string
+    defaultColor?: string
     valueRange?: number
     type: VideoEffectType;
     values: VideoEffectValue[];

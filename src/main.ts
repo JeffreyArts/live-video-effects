@@ -258,40 +258,44 @@ document.addEventListener("DOMContentLoaded", async () => {
                             return motion >= s.min! && motion <= s.max!
                         })?.val || optionsService.currentVideoEffect.values[0].val
 
+                        const size = optionsService.currentVideoEffect.values.find((s: VideoEffectValue) => {
+                            return motion >= s.min! && motion <= s.max!
+                        })?.size || 1
+
                         if (typeof value === "undefined") {
                             console.warn(`Geen waarde gevonden voor motion: ${motion}. Gebruik fallback waarde.`)
-                            ctx.fillStyle = optionsService.currentVideoEffect.defaultValue || "black"
+                            ctx.fillStyle = optionsService.currentVideoEffect.defaultColor || "black"
                         } else if (typeof value == "string") {
                             ctx.fillStyle = value
                         } else if (typeof value == "number") {
-                            ctx.fillStyle = optionsService.currentVideoEffect.defaultValue || "black"
+                            ctx.fillStyle = optionsService.currentVideoEffect.defaultColor || "black"
                         }
 
                         if (optionsService.currentVideoEffect.type == "rectangle") {
+                            const scaledWidth = cellWidth * size
+                            const scaledHeight = cellHeight * size
+                            const offsetX = (cellWidth - scaledWidth) / 2
+                            const offsetY = (cellHeight - scaledHeight) / 2
+                            
                             ctx.fillRect(
-                                x * cellWidth - .5,
-                                y * cellHeight - .5,
-                                cellWidth + .5,
-                                cellHeight + .5
+                                x * cellWidth + offsetX - .5,
+                                y * cellHeight + offsetY - .5,
+                                scaledWidth + .5,
+                                scaledHeight + .5
                             )
                         } else if (optionsService.currentVideoEffect.type == "dot") {
                             ctx.beginPath()
-                            let scale = 1
-
-                            if (typeof value == "number") {
-                                scale = value
-                            }
                             
                             ctx.arc(
                                 x * cellWidth + cellWidth / 2,
                                 y * cellHeight + cellHeight / 2,
-                                Math.min(cellWidth, cellHeight) / 2 * scale,
+                                Math.min(cellWidth, cellHeight) / 2 * size,
                                 0,
                                 2 * Math.PI
                             )
                             ctx.fill()
                         } else if (optionsService.currentVideoEffect.type == "text") {
-                            ctx.font = `${Math.min(cellWidth, cellHeight)}px Arial`
+                            ctx.font = `${Math.min(cellWidth, cellHeight) * size}px Arial`
                             ctx.textAlign = "center"
                             ctx.textBaseline = "middle"
                             // const tmp = (Math.round(motion*10)/ 10).toString()
@@ -304,12 +308,17 @@ document.addEventListener("DOMContentLoaded", async () => {
                             const imagePath = processImageCell(motion, x, y, imageGrid)
 
                             if (cachedImages[imagePath]) {
+                                const scaledWidth = cellWidth * size
+                                const scaledHeight = cellHeight * size
+                                const offsetX = (cellWidth - scaledWidth) / 2
+                                const offsetY = (cellHeight - scaledHeight) / 2
+
                                 ctx.drawImage(
                                     cachedImages[imagePath],
-                                    x * cellWidth - 0.5,
-                                    y * cellHeight - 0.5,
-                                    cellWidth + 0.5, 
-                                    cellHeight + 0.5
+                                    x * cellWidth + offsetX - 0.5,
+                                    y * cellHeight + offsetY - 0.5,
+                                    scaledWidth + 0.5,
+                                    scaledHeight + 0.5
                                 )
                             }
                         }
@@ -342,8 +351,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             imageLogicService.setCurrentValue(value)
             imageLogicService.setNeighbors(neighbors)
             
-            const res = imageLogicService.getImageForValue(videoEffect)
-            return res
+            return imageLogicService.getImageForValue(videoEffect)
         }
         return value
     }
