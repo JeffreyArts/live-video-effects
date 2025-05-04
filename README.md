@@ -81,7 +81,7 @@ De if statement van het values object kan nogal overweldigend overkomen, maar he
 ```
 {"if": "tl==1 && tr==1 && bl==1 && br==1 && c==1", "val": "/video-effects/<naam-effect>/afbeelding.png"}
 ```
-[image table of if statement variables ](https://raw.githubusercontent.com/JeffreyArts/live-video-effects/refs/heads/main/public/overview-cel.png)
+![image table of if statement variables ](https://raw.githubusercontent.com/JeffreyArts/live-video-effects/refs/heads/main/public/overview-cel.png)
 
 ## Deployment
 
