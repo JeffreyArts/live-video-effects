@@ -182,6 +182,23 @@ export class OptionsService {
             this._motionDetection["bufferSize"] = value
             this._motionDetection["reset"]()
         }
+
+        // Als buffer size 1 of lager is, schakel onlyMotionDetection uit
+        if (value <= 1) {
+            this.setOnlyMotionDetection(false)
+            // Update de UI
+            const onlyMotionDetectionCheckbox = document.getElementById("onlyMotionDetection") as HTMLInputElement
+            if (onlyMotionDetectionCheckbox) {
+                onlyMotionDetectionCheckbox.checked = false
+                onlyMotionDetectionCheckbox.disabled = true
+            }
+        } else {
+            // Herstel de checkbox state
+            const onlyMotionDetectionCheckbox = document.getElementById("onlyMotionDetection") as HTMLInputElement
+            if (onlyMotionDetectionCheckbox) {
+                onlyMotionDetectionCheckbox.disabled = false
+            }
+        }
     }
 
     setSignificantChangeThreshold(value: number): void {
@@ -418,6 +435,8 @@ export class OptionsService {
         const onlyMotionDetectionCheckbox = document.getElementById("onlyMotionDetection") as HTMLInputElement
         if (onlyMotionDetectionCheckbox) {
             onlyMotionDetectionCheckbox.checked = this._options.onlyMotionDetection
+            // Schakel de checkbox uit als buffer size 1 of lager is
+            onlyMotionDetectionCheckbox.disabled = this._options.bufferSize <= 1
             onlyMotionDetectionCheckbox.addEventListener("change", () => {
                 this.setOnlyMotionDetection(onlyMotionDetectionCheckbox.checked)
             })
