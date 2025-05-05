@@ -20,6 +20,7 @@ export interface VideoEffect {
 
 export interface Options {
     showVideo: boolean
+    showEffect: boolean
     showPose: boolean
     showPoseBW: boolean
     usePoseStream: boolean
@@ -37,6 +38,7 @@ const STORAGE_KEY = "webcam-options"
 
 const defaultOptions: Options = {
     showVideo: true,
+    showEffect: true,
     showPose: false,
     showPoseBW: false,
     usePoseStream: false,
@@ -246,6 +248,15 @@ export class OptionsService {
         this.saveOptions()
     }
 
+    setShowEffect(value: boolean): void {
+        this._options.showEffect = value
+        this.saveOptions()
+        const outputCanvas = document.getElementById("outputResult") as HTMLCanvasElement
+        if (outputCanvas) {
+            outputCanvas.style.display = value ? "block" : "none"
+        }
+    }
+
     applyOptions(motionDetection: MotionDetectionService, videoElement?: HTMLVideoElement): void {
         this._motionDetection = motionDetection
         this._videoElement = videoElement
@@ -273,10 +284,12 @@ export class OptionsService {
         const gridYInput = document.querySelector("#gridY") as HTMLInputElement
         const bufferInput = document.querySelector("#buffer") as HTMLInputElement
         const showVideoInput = document.querySelector("#showVideo") as HTMLInputElement
+        const showEffectInput = document.querySelector("#showEffect") as HTMLInputElement
         const thresholdInput = document.querySelector("#threshold") as HTMLInputElement
         const videoEffectSelect = document.querySelector("#videoEffectSelect") as HTMLSelectElement
         const toggleButton = document.querySelector(".toggle-button") as HTMLButtonElement
-
+        const showPoseCheckbox = document.getElementById("showPose") as HTMLInputElement
+        const showPoseBWCheckbox = document.getElementById("showPoseBW") as HTMLInputElement
         // Vul de video effect select met opties
         videoEffectSelect.innerHTML = this._videoEffects.map(effect => `
             <option value="${effect.name}">
@@ -302,6 +315,7 @@ export class OptionsService {
         bufferValueInput.value = options.bufferSize.toString()
         thresholdValueInput.value = options.significantChangeThreshold.toString()
         showVideoInput.checked = options.showVideo
+        showEffectInput.checked = options.showEffect
 
         // Event listeners voor grid X
         gridXInput.addEventListener("input", () => {
@@ -347,6 +361,11 @@ export class OptionsService {
             this.setShowVideo(isChecked)
         })
 
+        showEffectInput.addEventListener("change", () => {
+            const isChecked = showEffectInput.checked
+            this.setShowEffect(isChecked)
+        })
+
         // Event listeners voor threshold
         thresholdInput.addEventListener("input", () => {
             const value = parseInt(thresholdInput.value)
@@ -368,23 +387,23 @@ export class OptionsService {
             }
         })
 
+
         // Toggle sidebar
         toggleButton.addEventListener("click", () => {
             sidebar.classList.toggle("open")
         })
 
         // Voeg event listener toe voor showPose checkbox
-        const showPoseCheckbox = document.getElementById("showPose") as HTMLInputElement
         if (showPoseCheckbox) {
             showPoseCheckbox.checked = this._options.showPose
             showPoseCheckbox.disabled = true // Begin met disabled
+            console.log("showPoseCheckbox", showPoseCheckbox)
             showPoseCheckbox.addEventListener("change", (e) => {
                 this.setShowPose((e.target as HTMLInputElement).checked)
             })
         }
 
         // Voeg event listener toe voor showPoseBW checkbox
-        const showPoseBWCheckbox = document.getElementById("showPoseBW") as HTMLInputElement
         if (showPoseBWCheckbox) {
             showPoseBWCheckbox.checked = this._options.showPoseBW
             showPoseBWCheckbox.disabled = true // Begin met disabled
@@ -393,19 +412,17 @@ export class OptionsService {
             })
         }
 
+        const poseUpdateHandler = () => {
+            console.log("poseDetectionInitialized 2", showPoseCheckbox)
+            if (showPoseCheckbox) showPoseCheckbox.removeAttribute("disabled")
+            if (showPoseCheckbox) showPoseBWCheckbox.removeAttribute("disabled")
+        }
+        document.addEventListener("poseDetectionInitialized", poseUpdateHandler)
+        
         // Voeg event listener toe voor usePoseStream checkbox
         const usePoseStreamCheckbox = document.getElementById("usePoseStream") as HTMLInputElement
         if (usePoseStreamCheckbox) {
             usePoseStreamCheckbox.checked = this._options.usePoseStream
-
-            const poseUpdateHandler = () => {
-                showPoseCheckbox.disabled = false
-                showPoseBWCheckbox.disabled = false
-                document.removeEventListener("poseDetectionInitialized", poseUpdateHandler)
-            }
-
-            document.addEventListener("poseDetectionInitialized", poseUpdateHandler)
-
             usePoseStreamCheckbox.addEventListener("change", () => {
                 this.setUsePoseStream(usePoseStreamCheckbox.checked)
             })

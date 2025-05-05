@@ -75,11 +75,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                 sidebar.classList.remove("open")
             }
         })
+        // Haal het video element uit de HTML
+        const videoElement = document.querySelector("#webcam") as HTMLVideoElement
+
+        // Initialiseer de event listeners voor de opties
+        optionsService.initializeEventListeners(motionDetection, videoElement || undefined)
 
         await webcam.start()
         
-        // Haal het video element uit de HTML
-        const videoElement = document.querySelector("#webcam") as HTMLVideoElement
         if (videoElement) {
             videoElement.srcObject = webcam["stream"]
             videoElement.style.display = options.showVideo ? "block" : "none"
@@ -150,8 +153,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Initiële canvas size update
         updateCanvasSize()
 
-        // Initialiseer de event listeners voor de opties
-        optionsService.initializeEventListeners(motionDetection, videoElement || undefined)
 
         async function loadImages() {
             await optionsService.waitForVideoEffects()
@@ -223,7 +224,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                         for (let x = 0; x < motionGrid[y].length; x++) {
                             let motion = motionGrid[y][x]
                             
-                            // console.log(optionsService.currentVideoEffect)
                             if (optionsService.currentVideoEffect.valueRange) {
                                 const step = 1 / (optionsService.currentVideoEffect.valueRange - 1)
                                 motion = Math.round(motion / step) * step
@@ -245,7 +245,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                         // Debug logging
                         if (isNaN(motion)) {
-                            console.warn(`Ongeldige motion waarde gevonden: ${motion}. Originele waarde: ${motionGrid[y][x]}, valueRange: ${optionsService.currentVideoEffect.valueRange}`)
+                            // console.warn(`Ongeldige motion waarde gevonden: ${motion}. Originele waarde: ${motionGrid[y][x]}, valueRange: ${optionsService.currentVideoEffect.valueRange}`)
                             motion = 0 // Reset naar 0 als fallback
                         }
 
@@ -263,7 +263,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         })?.size || 1
 
                         if (typeof value === "undefined") {
-                            console.warn(`Geen waarde gevonden voor motion: ${motion}. Gebruik fallback waarde.`)
+                            // console.warn(`Geen waarde gevonden voor motion: ${motion}. Gebruik fallback waarde.`)
                             ctx.fillStyle = optionsService.currentVideoEffect.defaultColor || "black"
                         } else if (typeof value == "string") {
                             ctx.fillStyle = value
