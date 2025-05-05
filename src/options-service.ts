@@ -37,7 +37,7 @@ export interface Options {
 const STORAGE_KEY = "webcam-options"
 
 const defaultOptions: Options = {
-    showVideo: true,
+    showVideo: false,
     showEffect: true,
     showPose: false,
     showPoseBW: false,

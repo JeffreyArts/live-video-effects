@@ -291,17 +291,19 @@ document.addEventListener("DOMContentLoaded", async () => {
                             return motion >= s.min! && motion <= s.max!
                         })?.val || optionsService.currentVideoEffect.values[0].val
 
-                        const size = optionsService.currentVideoEffect.values.find((s: VideoEffectValue) => {
+                        let size = optionsService.currentVideoEffect.values.find((s: VideoEffectValue) => {
                             return motion >= s.min! && motion <= s.max!
-                        })?.size || 1
+                        })?.size
+
+                        if (typeof size === "undefined") {
+                            size = 1
+                        }
 
                         if (typeof value === "undefined") {
                             // console.warn(`Geen waarde gevonden voor motion: ${motion}. Gebruik fallback waarde.`)
                             ctx.fillStyle = optionsService.currentVideoEffect.defaultColor || "black"
                         } else if (typeof value == "string") {
                             ctx.fillStyle = value
-                        } else if (typeof value == "number") {
-                            ctx.fillStyle = optionsService.currentVideoEffect.defaultColor || "black"
                         }
 
                         if (optionsService.currentVideoEffect.type == "rectangle") {
