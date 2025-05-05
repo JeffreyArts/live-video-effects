@@ -3,8 +3,35 @@ import { WebcamModel } from "./webcam"
 import { MotionDetectionService } from "./motion-detection"
 import { OptionsService, VideoEffect, VideoEffectValue } from "./options-service"
 import { ImageLogicService } from "./image-logic-service"
-import { iconsMap } from "jao-icons"
+import { Icon, iconsMap } from "jao-icons"
 
+
+// Functie om het camera icoon te tonen
+function showCameraIcon() {
+    const cameraSVG = Icon("large/camera")
+    if (!cameraSVG) return
+
+    // Maak een container div
+    const container = document.createElement("div")
+    container.id = "camera-icon"
+    // create span
+    const span = document.createElement("span")
+    span.innerHTML = "No camera connected"
+
+    // Voeg het SVG toe aan de container
+    container.appendChild(cameraSVG)
+    container.appendChild(span)
+    // Voeg de container toe aan de body
+    document.body.appendChild(container)
+}
+
+// Functie om het camera icoon te verwijderen
+function removeCameraIcon() {
+    const icon = document.getElementById("camera-icon")
+    if (icon) {
+        icon.remove()
+    }
+}
 
 // Basis setup voor de applicatie
 const optionsService = new OptionsService()
@@ -16,6 +43,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const options = optionsService.options
     
     try {
+        // Toon het camera icoon voordat we de webcam starten
+        showCameraIcon()
+
         // Wacht tot de video effecten zijn geladen
         await optionsService.waitForVideoEffects()
 
@@ -82,6 +112,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         optionsService.initializeEventListeners(motionDetection, videoElement || undefined)
 
         await webcam.start()
+        
+        // Verwijder het camera icoon nadat de webcam is gestart
+        removeCameraIcon()
         
         if (videoElement) {
             videoElement.srcObject = webcam["stream"]

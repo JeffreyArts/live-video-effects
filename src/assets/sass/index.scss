@@ -16,3 +16,46 @@
 body.dev .dev-only {
     display: block;
 }
+
+#camera-icon {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 144px;
+    transform: translate(-50%, -50%);
+    z-index: 100000;
+    font-family: 'Fixedsys';
+    text-align: center;
+    font-size: 12px;
+    
+    span {
+        margin-top: 8px;
+        display: inline-block;
+    }
+    
+    &::before, &::after {
+        content: "";
+        display: block;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 128%;
+        height: 8px;
+        background-color: crimson;
+        z-index: 10;
+        translate: -50% -50%;
+        rotate: 45deg;
+    }
+
+    &::after {
+        rotate: -45deg;
+    }
+
+    rect[v="1"] { 
+        fill: black;
+    }
+
+    rect[v="0"] {
+        fill: #eee;
+    }
+}
