@@ -320,7 +320,7 @@ export class PoseDetectionModel {
         const webcamContext = this._webcamCanvas.getContext("2d")!
         webcamContext.clearRect(0, 0, this._webcamCanvas.width, this._webcamCanvas.height)
         webcamContext.fillStyle = "white"
-        webcamContext.filter = "invert(1)"
+        // webcamContext.filter = "invert(1)"
         webcamContext.fillRect(0, 0, this._webcamCanvas.width, this._webcamCanvas.height)
         webcamContext.drawImage(bwCanvas, 0, 0)
 
