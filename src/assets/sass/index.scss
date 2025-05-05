@@ -59,3 +59,16 @@ body.dev .dev-only {
         fill: #eee;
     }
 }
+
+.copyright-footer {
+    .dev-link {
+        margin-left: 8px;
+        text-decoration: none;
+        font-size: 1.2em;
+        transition: transform 0.2s ease;
+        
+        &:hover {
+            transform: scale(1.1);
+        }
+    }
+}

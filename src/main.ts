@@ -292,7 +292,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                         })?.val || optionsService.currentVideoEffect.values[0].val
 
                         let size = optionsService.currentVideoEffect.values.find((s: VideoEffectValue) => {
-                            return motion >= s.min! && motion <= s.max!
+                            if (s.min || s.max) {
+                                return motion >= s.min! && motion <= s.max!
+                            }
                         })?.size
 
                         if (typeof size === "undefined") {
@@ -341,13 +343,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                             )
                         } else if (optionsService.currentVideoEffect.type == "image") {
                             const imagePath = processImageCell(motion, x, y, imageGrid)
+                            const scaledWidth = cellWidth * size
+                            const scaledHeight = cellHeight * size
+                            const offsetX = (cellWidth - scaledWidth) / 2
+                            const offsetY = (cellHeight - scaledHeight) / 2
 
+                            
                             if (cachedImages[imagePath]) {
-                                const scaledWidth = cellWidth * size
-                                const scaledHeight = cellHeight * size
-                                const offsetX = (cellWidth - scaledWidth) / 2
-                                const offsetY = (cellHeight - scaledHeight) / 2
-
                                 ctx.drawImage(
                                     cachedImages[imagePath],
                                     x * cellWidth + offsetX - 0.5,
@@ -355,6 +357,22 @@ document.addEventListener("DOMContentLoaded", async () => {
                                     scaledWidth + 0.5,
                                     scaledHeight + 0.5
                                 )
+                            }
+
+                            // DEV: Toon de motion value linksboven in de cel
+                            if (document.body.classList.contains("dev")) {
+                                ctx.save()
+                                const fontSize = Math.max(10, Math.min(cellWidth, cellHeight) * 0.3)
+                                ctx.font = `${fontSize}px monospace`
+                                ctx.fillStyle = "#ff9900"
+                                ctx.textAlign = "center"
+                                ctx.textBaseline = "middle"
+                                ctx.fillText(
+                                    (Math.round(motion * 100) / 100).toString(),
+                                    x * cellWidth - offsetX*2,
+                                    y * cellHeight - offsetY*2  
+                                )
+                                ctx.restore()
                             }
                         }
                     }
@@ -394,6 +412,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Check if we're in dev mode
     if (window.location.search.includes("?dev")) {
         document.body.classList.add("dev")
+        const devLink = document.querySelector(".dev-link")
+        if (devLink) {
+            devLink.textContent = "🙆"
+            devLink.setAttribute("href", window.location.pathname)
+        }
     }
 })
 

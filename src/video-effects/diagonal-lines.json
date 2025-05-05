@@ -1,0 +1,14 @@
+{
+    "name": "Diagonal lines",
+    "type": "image",
+    "valueRange": 2,
+    "values": [
+        { "if": "c==1", "min": 0, "max": 1, "val": "/video-effects/diagonal-lines/bl-tr.png", "size": 1.5},
+        { "if": "c==0", "min": 0, "max": 1, "val": "/video-effects/diagonal-lines/tl-br.png", "size": 1.5},
+        { "if": "c==1 && r==0 && tr==1", "min": 0, "max": 1, "val": "/video-effects/diagonal-lines/bl-br.png", "size": 1.5 },
+        { "if": "c==1 && b==0 && tl==1", "min": 0, "max": 1, "val": "/video-effects/diagonal-lines/bl-br.png", "size": 1.5 },
+
+        { "if": "c==1 && b==1 && bl==0 && l==0 && tl==1", "min": 0, "max": 1, "val": "/video-effects/diagonal-lines/c-tr.png", "size": 1.5 },
+        { "if": "c==0 && t==0 && r==1", "min": 0, "max": 1, "val": "/video-effects/diagonal-lines/tl-tr.png", "size": 1.5 }
+    ]
+} 
